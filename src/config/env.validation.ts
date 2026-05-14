@@ -4,6 +4,8 @@ type EnvVars = {
   NODE_ENV?: string;
   PORT?: string;
   CORS_ORIGIN?: string;
+  JWT_ACCESS_SECRET?: string;
+  JWT_ACCESS_EXPIRES_IN?: string;
 };
 
 const ALLOWED_NODE_ENVS: NodeEnv[] = ['development', 'test', 'production'];
@@ -23,6 +25,14 @@ export function validateEnv(config: EnvVars): EnvVars {
     config.PORT = '3000';
   } else if (!/^\d+$/.test(config.PORT)) {
     errors.push('PORT must be a valid number.');
+  }
+
+  if (!config.JWT_ACCESS_SECRET) {
+    errors.push('JWT_ACCESS_SECRET is required.');
+  }
+
+  if (!config.JWT_ACCESS_EXPIRES_IN) {
+    config.JWT_ACCESS_EXPIRES_IN = '15m';
   }
 
   if (!config.CORS_ORIGIN) {
