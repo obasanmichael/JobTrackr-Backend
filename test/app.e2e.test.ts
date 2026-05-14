@@ -2,27 +2,29 @@ import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { AppController } from './../src/app.controller';
-import { AppService } from './../src/app.service';
+import { HealthModule } from './../src/health/health.module';
 
-describe('AppController (e2e)', () => {
+describe('Health (e2e)', () => {
   let app: INestApplication<App>;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      controllers: [AppController],
-      providers: [AppService],
+      imports: [HealthModule],
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix('api/v1');
     await app.init();
   });
 
-  it('/ (GET)', () => {
+  it('/api/v1/health (GET)', () => {
     return request(app.getHttpServer())
-      .get('/')
+      .get('/api/v1/health')
       .expect(200)
-      .expect('Hello World!');
+      .expect(({ body }: { body: { status: string; timestamp: string } }) => {
+        expect(body.status).toBe('ok');
+        expect(new Date(body.timestamp).toString()).not.toBe('Invalid Date');
+      });
   });
 
   afterEach(async () => {
