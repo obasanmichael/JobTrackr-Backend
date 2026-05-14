@@ -35,6 +35,10 @@ export function validateEnv(config: EnvVars): EnvVars {
 
   if (!config.JWT_ACCESS_EXPIRES_IN) {
     config.JWT_ACCESS_EXPIRES_IN = '15m';
+  } else if (!/^\d+(ms|s|m|h|d|w|y)$/.test(config.JWT_ACCESS_EXPIRES_IN)) {
+    errors.push(
+      'JWT_ACCESS_EXPIRES_IN must match duration format like 15m, 1h, or 7d.',
+    );
   }
 
   if (config.JWT_ISSUER) {
