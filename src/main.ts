@@ -10,7 +10,18 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
   const port = Number(configService.get<string>('PORT') ?? '3000');
+  const corsOriginValue =
+    configService.get<string>('CORS_ORIGIN') ?? 'http://localhost:3000';
+  const allowedOrigins = corsOriginValue
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
 
+  app.setGlobalPrefix('api/v1');
+  app.enableCors({
+    origin: allowedOrigins,
+    credentials: true,
+  });
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
