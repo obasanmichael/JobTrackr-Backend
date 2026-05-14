@@ -16,6 +16,60 @@ model User {
   name         String
   email        String   @unique
   passwordHash String
+  applications JobApplication[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model JobApplication {
+  id          String            @id @default(uuid())
+  userId      String
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobTitle    String
+  companyName String
+  jobUrl      String?
+  location    String?
+  workMode    WorkMode          @default(UNSPECIFIED)
+  salaryMin   Int?
+  salaryMax   Int?
+  currency    String?           @default("USD")
+  status      ApplicationStatus @default(SAVED)
+  source      ApplicationSource @default(OTHER)
+  deadline    DateTime?
+  notes       String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([companyName])
+}
+
+enum ApplicationStatus {
+  SAVED
+  APPLIED
+  SCREENING
+  INTERVIEW
+  TECHNICAL_ASSESSMENT
+  FINAL_INTERVIEW
+  OFFER
+  REJECTED
+  WITHDRAWN
+}
+
+enum WorkMode {
+  REMOTE
+  HYBRID
+  ONSITE
+  UNSPECIFIED
+}
+
+enum ApplicationSource {
+  LINKEDIN
+  COMPANY_WEBSITE
+  REFERRAL
+  INDEED
+  TWITTER
+  EMAIL
+  OTHER
 }

@@ -3,7 +3,10 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -42,7 +45,7 @@ export class ApplicationsController {
   @Get(':id')
   findOne(
     @CurrentUserDecorator() currentUser: CurrentUser,
-    @Param('id') id: string,
+    @Param('id', new ParseUUIDPipe()) id: string,
   ): Promise<ApplicationResponseDto> {
     return this.applicationsService.findOne(currentUser, id);
   }
@@ -50,16 +53,17 @@ export class ApplicationsController {
   @Patch(':id')
   update(
     @CurrentUserDecorator() currentUser: CurrentUser,
-    @Param('id') id: string,
+    @Param('id', new ParseUUIDPipe()) id: string,
     @Body() payload: UpdateApplicationDto,
   ): Promise<ApplicationResponseDto> {
     return this.applicationsService.update(currentUser, id, payload);
   }
 
   @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   remove(
     @CurrentUserDecorator() currentUser: CurrentUser,
-    @Param('id') id: string,
+    @Param('id', new ParseUUIDPipe()) id: string,
   ): Promise<void> {
     return this.applicationsService.remove(currentUser, id);
   }

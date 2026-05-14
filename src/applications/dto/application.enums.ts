@@ -1,28 +1,16 @@
-export enum ApplicationStatus {
-  SAVED = 'SAVED',
-  APPLIED = 'APPLIED',
-  SCREENING = 'SCREENING',
-  INTERVIEW = 'INTERVIEW',
-  TECHNICAL_ASSESSMENT = 'TECHNICAL_ASSESSMENT',
-  FINAL_INTERVIEW = 'FINAL_INTERVIEW',
-  OFFER = 'OFFER',
-  REJECTED = 'REJECTED',
-  WITHDRAWN = 'WITHDRAWN',
-}
+import {
+  ApplicationSource as PrismaApplicationSource,
+  ApplicationStatus as PrismaApplicationStatus,
+  WorkMode as PrismaWorkMode,
+} from '@prisma/client';
 
-export enum WorkMode {
-  REMOTE = 'REMOTE',
-  HYBRID = 'HYBRID',
-  ONSITE = 'ONSITE',
-  UNSPECIFIED = 'UNSPECIFIED',
-}
+export const ApplicationStatus = PrismaApplicationStatus;
+export type ApplicationStatus =
+  (typeof PrismaApplicationStatus)[keyof typeof PrismaApplicationStatus];
 
-export enum ApplicationSource {
-  LINKEDIN = 'LINKEDIN',
-  COMPANY_WEBSITE = 'COMPANY_WEBSITE',
-  REFERRAL = 'REFERRAL',
-  INDEED = 'INDEED',
-  TWITTER = 'TWITTER',
-  EMAIL = 'EMAIL',
-  OTHER = 'OTHER',
-}
+export const WorkMode = PrismaWorkMode;
+export type WorkMode = (typeof PrismaWorkMode)[keyof typeof PrismaWorkMode];
+
+export const ApplicationSource = PrismaApplicationSource;
+export type ApplicationSource =
+  (typeof PrismaApplicationSource)[keyof typeof PrismaApplicationSource];
