@@ -6,6 +6,8 @@ type EnvVars = {
   CORS_ORIGIN?: string;
   JWT_ACCESS_SECRET?: string;
   JWT_ACCESS_EXPIRES_IN?: string;
+  JWT_ISSUER?: string;
+  JWT_AUDIENCE?: string;
 };
 
 const ALLOWED_NODE_ENVS: NodeEnv[] = ['development', 'test', 'production'];
@@ -33,6 +35,17 @@ export function validateEnv(config: EnvVars): EnvVars {
 
   if (!config.JWT_ACCESS_EXPIRES_IN) {
     config.JWT_ACCESS_EXPIRES_IN = '15m';
+  }
+
+  if (config.JWT_ISSUER) {
+    try {
+      const url = new URL(config.JWT_ISSUER);
+      if (!['http:', 'https:'].includes(url.protocol)) {
+        errors.push('JWT_ISSUER must use http or https protocol.');
+      }
+    } catch {
+      errors.push('JWT_ISSUER must be a valid URL when provided.');
+    }
   }
 
   if (!config.CORS_ORIGIN) {

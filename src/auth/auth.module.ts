@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { AuthController } from './auth.controller';
+import { getAuthConfig } from './auth.config';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { JwtStrategy } from './strategies/jwt.strategy';
@@ -13,13 +14,10 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     JwtModule.registerAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
-        const secret = configService.get<string>('JWT_ACCESS_SECRET');
-        if (!secret) {
-          throw new Error('JWT_ACCESS_SECRET is required for JwtModule.');
-        }
+        const authConfig = getAuthConfig(configService);
 
         return {
-          secret,
+          secret: authConfig.accessSecret,
         };
       },
     }),
