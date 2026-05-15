@@ -18,6 +18,8 @@ model User {
   passwordHash String
   applications JobApplication[]
   events       ApplicationEvent[]
+  reminders    Reminder[]
+  interviews   Interview[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
@@ -39,6 +41,8 @@ model JobApplication {
   deadline    DateTime?
   notes       String?
   events      ApplicationEvent[]
+  reminders   Reminder[]
+  interviews  Interview[]
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
 
@@ -60,6 +64,45 @@ model ApplicationEvent {
 
   @@index([userId])
   @@index([applicationId])
+}
+
+model Reminder {
+  id            String         @id @default(uuid())
+  userId        String
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applicationId String
+  application   JobApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  title         String
+  description   String?
+  dueDate       DateTime
+  isCompleted   Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([userId])
+  @@index([applicationId])
+  @@index([dueDate])
+}
+
+model Interview {
+  id            String         @id @default(uuid())
+  userId        String
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applicationId String
+  application   JobApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  stage         InterviewStage
+  interviewType InterviewType
+  scheduledAt   DateTime
+  location      String?
+  meetingLink   String?
+  notes         String?
+  outcome       String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([userId])
+  @@index([applicationId])
+  @@index([scheduledAt])
 }
 
 enum ApplicationStatus {
@@ -98,4 +141,23 @@ enum EventType {
   INTERVIEW_UPDATE
   REMINDER_CREATED
   GENERAL_UPDATE
+}
+
+enum InterviewStage {
+  RECRUITER_SCREEN
+  TECHNICAL_INTERVIEW
+  TECHNICAL_ASSESSMENT
+  HIRING_MANAGER
+  FINAL_INTERVIEW
+  OFFER_DISCUSSION
+  OTHER
+}
+
+enum InterviewType {
+  PHONE
+  VIDEO
+  ONSITE
+  TAKE_HOME
+  LIVE_CODING
+  OTHER
 }
