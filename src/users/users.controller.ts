@@ -1,5 +1,11 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUserDecorator } from '../common/decorators/current-user.decorator';
 import { UserProfileDto } from './dto/user-profile.dto';
@@ -14,6 +20,9 @@ export class UsersController {
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Get current user profile' })
+  @ApiOkResponse({ type: UserProfileDto })
+  @ApiUnauthorizedResponse({ description: 'Missing or invalid token.' })
   me(@CurrentUserDecorator() currentUser: CurrentUser): Promise<UserProfileDto> {
     return this.usersService.getCurrentUserProfile(currentUser);
   }

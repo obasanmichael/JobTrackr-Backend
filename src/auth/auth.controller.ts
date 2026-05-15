@@ -1,6 +1,11 @@
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import {
+  ApiBadRequestResponse,
   ApiBearerAuth,
+  ApiBody,
+  ApiConflictResponse,
+  ApiCreatedResponse,
+  ApiOperation,
   ApiOkResponse,
   ApiTags,
   ApiTooManyRequestsResponse,
@@ -34,6 +39,11 @@ export class AuthController {
       ttl: seconds(60),
     },
   })
+  @ApiOperation({ summary: 'Register a new user account' })
+  @ApiBody({ type: RegisterDto })
+  @ApiCreatedResponse({ type: AuthResponseDto })
+  @ApiBadRequestResponse({ description: 'Validation error.' })
+  @ApiConflictResponse({ description: 'Email already exists.' })
   @ApiTooManyRequestsResponse({ description: 'Too many auth requests.' })
   register(@Body() payload: RegisterDto): Promise<AuthResponseDto> {
     return this.authService.register(payload);
@@ -46,6 +56,11 @@ export class AuthController {
       ttl: seconds(60),
     },
   })
+  @ApiOperation({ summary: 'Login with email and password' })
+  @ApiBody({ type: LoginDto })
+  @ApiCreatedResponse({ type: AuthResponseDto })
+  @ApiBadRequestResponse({ description: 'Validation error.' })
+  @ApiUnauthorizedResponse({ description: 'Invalid credentials.' })
   @ApiTooManyRequestsResponse({ description: 'Too many auth requests.' })
   login(@Body() payload: LoginDto): Promise<AuthResponseDto> {
     return this.authService.login(payload);
@@ -53,6 +68,7 @@ export class AuthController {
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Get current authenticated user profile' })
   @ApiBearerAuth('access-token')
   @ApiOkResponse({ type: UserProfileDto })
   @ApiUnauthorizedResponse({ description: 'Missing or invalid token.' })

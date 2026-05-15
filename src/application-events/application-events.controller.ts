@@ -10,7 +10,15 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiCreatedResponse,
+  ApiNoContentResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUserDecorator } from '../common/decorators/current-user.decorator';
 import type { CurrentUser } from '../common/types/current-user.type';
@@ -26,6 +34,9 @@ export class ApplicationEventsController {
   constructor(private readonly applicationEventsService: ApplicationEventsService) {}
 
   @Post('applications/:id/events')
+  @ApiOperation({ summary: 'Create an event for an application timeline' })
+  @ApiBody({ type: CreateApplicationEventDto })
+  @ApiCreatedResponse({ type: ApplicationEventResponseDto })
   create(
     @CurrentUserDecorator() currentUser: CurrentUser,
     @Param('id', new ParseUUIDPipe()) applicationId: string,
@@ -39,6 +50,8 @@ export class ApplicationEventsController {
   }
 
   @Get('applications/:id/events')
+  @ApiOperation({ summary: 'List timeline events for an application' })
+  @ApiOkResponse({ type: ApplicationEventResponseDto, isArray: true })
   list(
     @CurrentUserDecorator() currentUser: CurrentUser,
     @Param('id', new ParseUUIDPipe()) applicationId: string,
@@ -51,6 +64,8 @@ export class ApplicationEventsController {
 
   @Delete('application-events/:eventId')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Delete an application event' })
+  @ApiNoContentResponse()
   remove(
     @CurrentUserDecorator() currentUser: CurrentUser,
     @Param('eventId', new ParseUUIDPipe()) eventId: string,

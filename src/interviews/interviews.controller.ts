@@ -11,7 +11,15 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiCreatedResponse,
+  ApiNoContentResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUserDecorator } from '../common/decorators/current-user.decorator';
 import type { CurrentUser } from '../common/types/current-user.type';
@@ -28,6 +36,9 @@ export class InterviewsController {
   constructor(private readonly interviewsService: InterviewsService) {}
 
   @Post()
+  @ApiOperation({ summary: 'Create an interview' })
+  @ApiBody({ type: CreateInterviewDto })
+  @ApiCreatedResponse({ type: InterviewResponseDto })
   create(
     @CurrentUserDecorator() currentUser: CurrentUser,
     @Body() payload: CreateInterviewDto,
@@ -36,6 +47,8 @@ export class InterviewsController {
   }
 
   @Get()
+  @ApiOperation({ summary: 'List all interviews for current user' })
+  @ApiOkResponse({ type: InterviewResponseDto, isArray: true })
   findAll(
     @CurrentUserDecorator() currentUser: CurrentUser,
   ): Promise<InterviewResponseDto[]> {
@@ -43,6 +56,8 @@ export class InterviewsController {
   }
 
   @Get('upcoming')
+  @ApiOperation({ summary: 'List upcoming interviews ordered by scheduled date' })
+  @ApiOkResponse({ type: InterviewResponseDto, isArray: true })
   findUpcoming(
     @CurrentUserDecorator() currentUser: CurrentUser,
   ): Promise<InterviewResponseDto[]> {
@@ -50,6 +65,9 @@ export class InterviewsController {
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Update an interview' })
+  @ApiBody({ type: UpdateInterviewDto })
+  @ApiOkResponse({ type: InterviewResponseDto })
   update(
     @CurrentUserDecorator() currentUser: CurrentUser,
     @Param('id', new ParseUUIDPipe()) id: string,
@@ -60,6 +78,8 @@ export class InterviewsController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Delete an interview' })
+  @ApiNoContentResponse()
   remove(
     @CurrentUserDecorator() currentUser: CurrentUser,
     @Param('id', new ParseUUIDPipe()) id: string,
