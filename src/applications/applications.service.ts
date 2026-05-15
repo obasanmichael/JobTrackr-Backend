@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import type { CurrentUser } from '../common/types/current-user.type';
+import { ApplicationStatus } from './dto/application.enums';
 import { ApplicationQueryDto } from './dto/application-query.dto';
 import { ApplicationResponseDto } from './dto/application-response.dto';
 import { CreateApplicationDto } from './dto/create-application.dto';
@@ -52,7 +53,10 @@ export class ApplicationsService {
                 jobTitle: { contains: normalizedSearch, mode: 'insensitive' },
               },
               {
-                companyName: { contains: normalizedSearch, mode: 'insensitive' },
+                companyName: {
+                  contains: normalizedSearch,
+                  mode: 'insensitive',
+                },
               },
             ]
           : undefined,
@@ -87,7 +91,10 @@ export class ApplicationsService {
     id: string,
     payload: UpdateApplicationDto,
   ): Promise<ApplicationResponseDto> {
-    await this.ensureApplicationOwnership(currentUser.userId, id);
+    const existing = await this.getOwnedApplicationOrThrow(
+      currentUser.userId,
+      id,
+    );
 
     const updated = await this.prismaService.jobApplication.update({
       where: { id },
@@ -107,32 +114,59 @@ export class ApplicationsService {
       },
     });
 
+    if (payload.status && payload.status !== existing.status) {
+      await this.prismaService.applicationEvent.create({
+        data: {
+          userId: currentUser.userId,
+          applicationId: updated.id,
+          type: 'STATUS_CHANGE',
+          title: this.buildStatusChangeTitle(existing.status, payload.status),
+        },
+      });
+    }
+
     return this.toApplicationResponse(updated);
   }
 
   async remove(currentUser: CurrentUser, id: string): Promise<void> {
-    await this.ensureApplicationOwnership(currentUser.userId, id);
+    await this.getOwnedApplicationOrThrow(currentUser.userId, id);
 
     await this.prismaService.jobApplication.delete({
       where: { id },
     });
   }
 
-  private async ensureApplicationOwnership(
+  private async getOwnedApplicationOrThrow(
     userId: string,
     applicationId: string,
-  ): Promise<void> {
+  ): Promise<{ id: string; status: ApplicationStatus }> {
     const existing = await this.prismaService.jobApplication.findFirst({
       where: {
         id: applicationId,
         userId,
       },
-      select: { id: true },
+      select: { id: true, status: true },
     });
 
     if (!existing) {
       throw new NotFoundException('Application not found.');
     }
+
+    return existing;
+  }
+
+  private buildStatusChangeTitle(
+    fromStatus: ApplicationStatus,
+    toStatus: ApplicationStatus,
+  ): string {
+    return `Status changed from ${this.humanizeStatus(fromStatus)} to ${this.humanizeStatus(toStatus)}`;
+  }
+
+  private humanizeStatus(status: ApplicationStatus): string {
+    return status
+      .split('_')
+      .map((part) => part.charAt(0) + part.slice(1).toLowerCase())
+      .join(' ');
   }
 
   private buildOrderBy(

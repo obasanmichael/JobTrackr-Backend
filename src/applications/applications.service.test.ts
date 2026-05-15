@@ -5,6 +5,9 @@ import { ApplicationStatus } from './dto/application.enums';
 describe('ApplicationsService', () => {
   let service: ApplicationsService;
   let prismaService: {
+    applicationEvent: {
+      create: jest.Mock;
+    };
     jobApplication: {
       create: jest.Mock;
       findMany: jest.Mock;
@@ -16,6 +19,9 @@ describe('ApplicationsService', () => {
 
   beforeEach(() => {
     prismaService = {
+      applicationEvent: {
+        create: jest.fn(),
+      },
       jobApplication: {
         create: jest.fn(),
         findMany: jest.fn(),
@@ -103,5 +109,78 @@ describe('ApplicationsService', () => {
     await expect(
       service.remove({ userId: 'user-2', email: 'user2@example.com' }, 'app-1'),
     ).rejects.toThrow(NotFoundException);
+  });
+
+  it('creates STATUS_CHANGE event when status changes', async () => {
+    prismaService.jobApplication.findFirst.mockResolvedValue({
+      id: 'app-1',
+      status: 'SAVED',
+    });
+    prismaService.jobApplication.update.mockResolvedValue({
+      id: 'app-1',
+      userId: 'user-1',
+      jobTitle: 'Frontend Engineer',
+      companyName: 'Acme',
+      jobUrl: null,
+      location: null,
+      workMode: 'UNSPECIFIED',
+      salaryMin: null,
+      salaryMax: null,
+      currency: 'USD',
+      status: 'APPLIED',
+      source: 'OTHER',
+      deadline: null,
+      notes: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    await service.update(
+      { userId: 'user-1', email: 'user@example.com' },
+      'app-1',
+      { status: ApplicationStatus.APPLIED },
+    );
+
+    expect(prismaService.applicationEvent.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          type: 'STATUS_CHANGE',
+          title: 'Status changed from Saved to Applied',
+        }),
+      }),
+    );
+  });
+
+  it('does not create STATUS_CHANGE event when status is unchanged', async () => {
+    prismaService.jobApplication.findFirst.mockResolvedValue({
+      id: 'app-1',
+      status: 'APPLIED',
+    });
+    prismaService.jobApplication.update.mockResolvedValue({
+      id: 'app-1',
+      userId: 'user-1',
+      jobTitle: 'Frontend Engineer',
+      companyName: 'Acme',
+      jobUrl: null,
+      location: null,
+      workMode: 'UNSPECIFIED',
+      salaryMin: null,
+      salaryMax: null,
+      currency: 'USD',
+      status: 'APPLIED',
+      source: 'OTHER',
+      deadline: null,
+      notes: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    await service.update(
+      { userId: 'user-1', email: 'user@example.com' },
+      'app-1',
+      { status: ApplicationStatus.APPLIED },
+    );
+
+    expect(prismaService.applicationEvent.create).not.toHaveBeenCalled();
   });
 });
