@@ -12,6 +12,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUserDecorator } from '../common/decorators/current-user.decorator';
 import { ApplicationQueryDto } from './dto/application-query.dto';
@@ -23,6 +24,8 @@ import type { CurrentUser } from '../common/types/current-user.type';
 
 @Controller('applications')
 @UseGuards(JwtAuthGuard)
+@ApiTags('applications')
+@ApiBearerAuth('access-token')
 export class ApplicationsController {
   constructor(private readonly applicationsService: ApplicationsService) {}
 

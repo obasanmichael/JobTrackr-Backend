@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
+import { seconds, ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ApplicationEventsModule } from './application-events/application-events.module';
 import { ApplicationsModule } from './applications/applications.module';
 import { AuthModule } from './auth/auth.module';
@@ -19,6 +21,21 @@ import { UsersModule } from './users/users.module';
       expandVariables: true,
       validate: validateEnv,
     }),
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        const ttlSeconds = Number(configService.get<string>('THROTTLE_TTL_SECONDS') ?? '60');
+        const limit = Number(configService.get<string>('THROTTLE_LIMIT') ?? '100');
+
+        return [
+          {
+            name: 'default',
+            ttl: seconds(ttlSeconds),
+            limit,
+          },
+        ];
+      },
+    }),
     PrismaModule,
     HealthModule,
     AuthModule,
@@ -28,6 +45,12 @@ import { UsersModule } from './users/users.module';
     RemindersModule,
     InterviewsModule,
     DashboardModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class AppModule {}

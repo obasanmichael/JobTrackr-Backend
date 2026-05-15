@@ -4,6 +4,9 @@ type EnvVars = {
   NODE_ENV?: string;
   PORT?: string;
   CORS_ORIGIN?: string;
+  THROTTLE_TTL_SECONDS?: string;
+  THROTTLE_LIMIT?: string;
+  AUTH_THROTTLE_LIMIT?: string;
   JWT_ACCESS_SECRET?: string;
   JWT_ACCESS_EXPIRES_IN?: string;
   JWT_ISSUER?: string;
@@ -27,6 +30,24 @@ export function validateEnv(config: EnvVars): EnvVars {
     config.PORT = '3000';
   } else if (!/^\d+$/.test(config.PORT)) {
     errors.push('PORT must be a valid number.');
+  }
+
+  if (!config.THROTTLE_TTL_SECONDS) {
+    config.THROTTLE_TTL_SECONDS = '60';
+  } else if (!/^\d+$/.test(config.THROTTLE_TTL_SECONDS)) {
+    errors.push('THROTTLE_TTL_SECONDS must be a valid number.');
+  }
+
+  if (!config.THROTTLE_LIMIT) {
+    config.THROTTLE_LIMIT = '100';
+  } else if (!/^\d+$/.test(config.THROTTLE_LIMIT)) {
+    errors.push('THROTTLE_LIMIT must be a valid number.');
+  }
+
+  if (!config.AUTH_THROTTLE_LIMIT) {
+    config.AUTH_THROTTLE_LIMIT = '30';
+  } else if (!/^\d+$/.test(config.AUTH_THROTTLE_LIMIT)) {
+    errors.push('AUTH_THROTTLE_LIMIT must be a valid number.');
   }
 
   if (!config.JWT_ACCESS_SECRET) {

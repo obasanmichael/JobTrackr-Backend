@@ -10,6 +10,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUserDecorator } from '../common/decorators/current-user.decorator';
 import type { CurrentUser } from '../common/types/current-user.type';
@@ -19,6 +20,8 @@ import { ApplicationEventsService } from './application-events.service';
 
 @Controller()
 @UseGuards(JwtAuthGuard)
+@ApiTags('application-events')
+@ApiBearerAuth('access-token')
 export class ApplicationEventsController {
   constructor(private readonly applicationEventsService: ApplicationEventsService) {}
 

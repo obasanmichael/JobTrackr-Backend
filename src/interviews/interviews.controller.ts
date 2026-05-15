@@ -11,6 +11,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUserDecorator } from '../common/decorators/current-user.decorator';
 import type { CurrentUser } from '../common/types/current-user.type';
@@ -21,6 +22,8 @@ import { InterviewsService } from './interviews.service';
 
 @Controller('interviews')
 @UseGuards(JwtAuthGuard)
+@ApiTags('interviews')
+@ApiBearerAuth('access-token')
 export class InterviewsController {
   constructor(private readonly interviewsService: InterviewsService) {}
 

@@ -11,6 +11,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUserDecorator } from '../common/decorators/current-user.decorator';
 import type { CurrentUser } from '../common/types/current-user.type';
@@ -21,6 +22,8 @@ import { RemindersService } from './reminders.service';
 
 @Controller('reminders')
 @UseGuards(JwtAuthGuard)
+@ApiTags('reminders')
+@ApiBearerAuth('access-token')
 export class RemindersController {
   constructor(private readonly remindersService: RemindersService) {}
 
