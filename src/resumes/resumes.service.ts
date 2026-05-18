@@ -9,6 +9,7 @@ import { Prisma, ResumeParseStatus } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { PrismaService } from '../prisma/prisma.service';
+import { CandidateProfilesService } from '../candidate-profiles/candidate-profiles.service';
 import { ResumeLocalStorageService } from '../storage/resume-local.storage';
 import type { CurrentUser } from '../common/types/current-user.type';
 import { CandidateProfileResponseDto } from './dto/candidate-profile-response.dto';
@@ -29,12 +30,13 @@ export class ResumesService {
     private readonly prisma: PrismaService,
     private readonly storage: ResumeLocalStorageService,
     private readonly documentParser: ResumeDocumentParserService,
+    private readonly candidateProfiles: CandidateProfilesService,
   ) {}
 
   async listForUser(user: CurrentUser): Promise<ResumeResponseDto[]> {
     const resumes = await this.prisma.resume.findMany({
       where: { userId: user.userId },
-      orderBy: { updatedAt: 'asc' },
+      orderBy: { updatedAt: 'desc' },
     });
     return resumes.map((resume) => ResumesService.toDto(resume));
   }
@@ -61,18 +63,39 @@ export class ResumesService {
       throw new NotFoundException('Resume not found');
     }
 
+    if (
+      dto.status === ResumeParseStatus.ARCHIVED &&
+      dto.isActive === true
+    ) {
+      throw new BadRequestException(
+        'Cannot archive and activate the same resume in one request',
+      );
+    }
+
+    if (
+      dto.isActive === true &&
+      resume.status === ResumeParseStatus.ARCHIVED
+    ) {
+      throw new BadRequestException(
+        'Archived resumes cannot be marked active',
+      );
+    }
+
+    if (dto.status === ResumeParseStatus.ARCHIVED) {
+      await this.prisma.resume.update({
+        where: { id: resumeId },
+        data: {
+          status: ResumeParseStatus.ARCHIVED,
+          isActive: false,
+        },
+      });
+    }
+
     if (dto.isActive === true) {
-      await this.prisma.$transaction([
-        this.prisma.resume.updateMany({
-          where: { userId: user.userId },
-          data: { isActive: false },
-        }),
-        this.prisma.resume.update({
-          where: { id: resumeId },
-          data: { isActive: true },
-        }),
-      ]);
-    } else if (dto.isActive === false) {
+      return this.setActiveResume(user, resumeId);
+    }
+
+    if (dto.isActive === false) {
       await this.prisma.resume.update({
         where: { id: resumeId },
         data: { isActive: false },
@@ -86,6 +109,85 @@ export class ResumesService {
       throw new NotFoundException('Resume not found');
     }
     return ResumesService.toDto(next);
+  }
+
+  async setActiveResume(
+    user: CurrentUser,
+    resumeId: string,
+  ): Promise<ResumeResponseDto> {
+    const resume = await this.prisma.resume.findFirst({
+      where: { id: resumeId, userId: user.userId },
+    });
+    if (!resume) {
+      throw new NotFoundException('Resume not found');
+    }
+
+    if (resume.status === ResumeParseStatus.ARCHIVED) {
+      throw new BadRequestException(
+        'Archived resumes cannot be marked active',
+      );
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.resume.updateMany({
+        where: { userId: user.userId },
+        data: { isActive: false },
+      }),
+      this.prisma.resume.update({
+        where: { id: resumeId },
+        data: { isActive: true },
+      }),
+    ]);
+
+    const updated = await this.prisma.resume.findFirst({
+      where: { id: resumeId, userId: user.userId },
+    });
+    if (!updated) {
+      throw new NotFoundException('Resume not found');
+    }
+    return ResumesService.toDto(updated);
+  }
+
+  async unarchiveResume(
+    user: CurrentUser,
+    resumeId: string,
+  ): Promise<ResumeResponseDto> {
+    const resume = await this.prisma.resume.findFirst({
+      where: { id: resumeId, userId: user.userId },
+    });
+    if (!resume) {
+      throw new NotFoundException('Resume not found');
+    }
+
+    if (resume.status !== ResumeParseStatus.ARCHIVED) {
+      throw new BadRequestException('Only archived resumes can be restored');
+    }
+
+    const nextStatus = resume.parsedText
+      ? ResumeParseStatus.PARSED
+      : resume.parseError
+        ? ResumeParseStatus.FAILED
+        : ResumeParseStatus.UPLOADED;
+
+    const updated = await this.prisma.resume.update({
+      where: { id: resumeId },
+      data: { status: nextStatus },
+    });
+    return ResumesService.toDto(updated);
+  }
+
+  async remove(user: CurrentUser, resumeId: string): Promise<void> {
+    const resume = await this.prisma.resume.findFirst({
+      where: { id: resumeId, userId: user.userId },
+    });
+    if (!resume) {
+      throw new NotFoundException('Resume not found');
+    }
+
+    await this.storage.remove(resume.storageKey);
+    await this.prisma.resume.delete({
+      where: { id: resumeId },
+    });
   }
 
   async getOrCreateProfile(
@@ -115,23 +217,24 @@ export class ResumesService {
       return ResumesService.profileToDto(existing);
     }
 
-    const created = await this.prisma.candidateProfile.create({
-      data: {
-        userId: user.userId,
-        resumeId,
-        skills: [],
-        tools: [],
-        roles: [],
-        industries: [],
-        locations: [],
-        workModes: [],
-        education: [],
-        certifications: [],
-        projects: [],
-        experience: [],
-      },
-    });
-    return ResumesService.profileToDto(created);
+    if (resume.status === ResumeParseStatus.PARSED) {
+      await this.candidateProfiles.syncFromHeuristicParse(resume);
+      const created = await this.prisma.candidateProfile.findUnique({
+        where: { resumeId },
+      });
+      if (!created) {
+        throw new InternalServerErrorException(
+          'Candidate profile could not be generated',
+        );
+      }
+      return ResumesService.profileToDto(created);
+    }
+
+    const stub = await this.candidateProfiles.createFailureStub(
+      user.userId,
+      resumeId,
+    );
+    return ResumesService.profileToDto(stub);
   }
 
   async updateProfile(
@@ -267,7 +370,7 @@ export class ResumesService {
         binary,
         resume.fileType,
       );
-      await this.prisma.resume.update({
+      const parsedResume = await this.prisma.resume.update({
         where: { id: resumeId },
         data: {
           status: ResumeParseStatus.PARSED,
@@ -275,6 +378,7 @@ export class ResumesService {
           parseError: null,
         },
       });
+      await this.candidateProfiles.syncFromHeuristicParse(parsedResume);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Could not extract resume text';
@@ -324,10 +428,26 @@ export class ResumesService {
       certifications: ResumesService.jsonField(profile.certifications),
       projects: ResumesService.jsonField(profile.projects),
       experience: ResumesService.jsonField(profile.experience),
+      extractionPipeline: profile.extractionPipeline,
+      rawExtractedData: ResumesService.jsonRecord(profile.rawExtractedData),
       isConfirmed: profile.isConfirmed,
       createdAt: profile.createdAt,
       updatedAt: profile.updatedAt,
     };
+  }
+
+  private static jsonRecord(
+    value: Prisma.JsonValue | null | undefined,
+  ): Record<string, unknown> | null {
+    if (
+      value === null ||
+      value === undefined ||
+      typeof value !== 'object' ||
+      Array.isArray(value)
+    ) {
+      return null;
+    }
+    return value as Record<string, unknown>;
   }
 
   private static jsonField(

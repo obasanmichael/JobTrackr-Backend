@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MulterModule } from '@nestjs/platform-express';
 import { AuthModule } from '../auth/auth.module';
+import { CandidateProfilesModule } from '../candidate-profiles/candidate-profiles.module';
 import { StorageModule } from '../storage/storage.module';
 import { ResumeDocumentParserService } from './resume-document-parser.service';
 import { ResumesController } from './resumes.controller';
@@ -12,6 +13,7 @@ const DEFAULT_RESUME_MAX_BYTES = 5 * 1024 * 1024;
 @Module({
   imports: [
     AuthModule,
+    CandidateProfilesModule,
     StorageModule,
     MulterModule.registerAsync({
       imports: [ConfigModule],

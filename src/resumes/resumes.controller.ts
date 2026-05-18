@@ -1,7 +1,10 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -16,6 +19,7 @@ import {
   ApiBody,
   ApiConsumes,
   ApiCreatedResponse,
+  ApiNoContentResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
@@ -66,6 +70,33 @@ export class ResumesController {
     return this.resumesService.uploadAndParse(currentUser, file);
   }
 
+  @Post(':id/set-active')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Mark this resume as the active CV (only one active per user)',
+  })
+  @ApiOkResponse({ type: ResumeResponseDto })
+  setActive(
+    @CurrentUserDecorator() currentUser: CurrentUser,
+    @Param('id', ParseUUIDPipe) resumeId: string,
+  ): Promise<ResumeResponseDto> {
+    return this.resumesService.setActiveResume(currentUser, resumeId);
+  }
+
+  @Post(':id/unarchive')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary:
+      'Restore an archived resume to the main library (status derived from parsed data)',
+  })
+  @ApiOkResponse({ type: ResumeResponseDto })
+  unarchive(
+    @CurrentUserDecorator() currentUser: CurrentUser,
+    @Param('id', ParseUUIDPipe) resumeId: string,
+  ): Promise<ResumeResponseDto> {
+    return this.resumesService.unarchiveResume(currentUser, resumeId);
+  }
+
   @Get(':id/profile')
   @ApiOperation({
     summary: 'Get candidate profile for a resume (created after parsing)',
@@ -100,7 +131,10 @@ export class ResumesController {
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update resume metadata (e.g. active resume)' })
+  @ApiOperation({
+    summary:
+      'Update resume (active flag and/or archive). POST /resumes/:id/set-active is equivalent to activating via PATCH.',
+  })
   @ApiOkResponse({ type: ResumeResponseDto })
   updateResume(
     @CurrentUserDecorator() currentUser: CurrentUser,
@@ -108,5 +142,16 @@ export class ResumesController {
     @Body() dto: UpdateResumeDto,
   ): Promise<ResumeResponseDto> {
     return this.resumesService.updateResume(currentUser, resumeId, dto);
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Delete resume file and database records' })
+  @ApiNoContentResponse()
+  remove(
+    @CurrentUserDecorator() currentUser: CurrentUser,
+    @Param('id', ParseUUIDPipe) resumeId: string,
+  ): Promise<void> {
+    return this.resumesService.remove(currentUser, resumeId);
   }
 }

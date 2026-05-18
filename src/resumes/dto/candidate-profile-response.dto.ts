@@ -33,6 +33,10 @@ export class CandidateProfileResponseDto {
   projects!: unknown[] | Record<string, unknown> | null;
   @ApiPropertyOptional()
   experience!: unknown[] | Record<string, unknown> | null;
+  @ApiPropertyOptional({ description: 'e.g. heuristic:v1 or future llm:v1' })
+  extractionPipeline!: string | null;
+  @ApiPropertyOptional({ description: 'Opaque extraction diagnostics / segments' })
+  rawExtractedData!: Record<string, unknown> | null;
   @ApiProperty()
   isConfirmed!: boolean;
   @ApiProperty({ type: String, format: 'date-time' })
