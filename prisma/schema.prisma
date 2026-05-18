@@ -20,10 +20,11 @@ model User {
   events           ApplicationEvent[]
   reminders        Reminder[]
   interviews       Interview[]
-  resumes          Resume[]
-  candidateProfiles  CandidateProfile[]
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
+  resumes           Resume[]
+  candidateProfiles CandidateProfile[]
+  resumeReviews     ResumeReview[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
 }
 
 model Resume {
@@ -40,6 +41,7 @@ model Resume {
   parseError         String?
   isActive           Boolean              @default(false)
   candidateProfile   CandidateProfile?
+  resumeReviews      ResumeReview[]
   createdAt          DateTime             @default(now())
   updatedAt          DateTime             @updatedAt
 
@@ -90,15 +92,48 @@ model JobApplication {
   source      ApplicationSource @default(OTHER)
   deadline    DateTime?
   notes       String?
-  events      ApplicationEvent[]
-  reminders   Reminder[]
-  interviews  Interview[]
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  events            ApplicationEvent[]
+  reminders         Reminder[]
+  interviews        Interview[]
+  resumeReviews     ResumeReview[]
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
 
   @@index([userId])
   @@index([status])
   @@index([companyName])
+}
+
+model ResumeReview {
+  id              String             @id @default(uuid())
+  userId          String
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resumeId        String
+  resume          Resume             @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  applicationId   String?
+  application     JobApplication?      @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+  jobId           String?
+  type            ResumeReviewType
+  overallScore    Int?
+  atsScore        Int?
+  keywordScore    Int?
+  structureScore  Int?
+  clarityScore    Int?
+  strengths       Json?
+  weaknesses      Json?
+  missingKeywords Json?
+  suggestions     Json?
+  improvedBullets Json?
+  summary         String?
+  rawAiOutput     Json?
+  status          ResumeReviewStatus @default(PENDING)
+  errorMessage    String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@index([userId])
+  @@index([resumeId])
+  @@index([applicationId])
 }
 
 model ApplicationEvent {
@@ -218,4 +253,15 @@ enum ResumeParseStatus {
   PARSED
   FAILED
   ARCHIVED
+}
+
+enum ResumeReviewType {
+  GENERAL
+  JOB_SPECIFIC
+}
+
+enum ResumeReviewStatus {
+  PENDING
+  COMPLETED
+  FAILED
 }

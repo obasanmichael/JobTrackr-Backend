@@ -12,6 +12,7 @@ import { InterviewsModule } from './interviews/interviews.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RemindersModule } from './reminders/reminders.module';
 import { JobsModule } from './jobs/jobs.module';
+import { ResumeReviewsModule } from './resume-reviews/resume-reviews.module';
 import { ResumesModule } from './resumes/resumes.module';
 import { UsersModule } from './users/users.module';
 
@@ -43,6 +44,7 @@ import { UsersModule } from './users/users.module';
     AuthModule,
     UsersModule,
     ResumesModule,
+    ResumeReviewsModule,
     JobsModule,
     ApplicationsModule,
     ApplicationEventsModule,
