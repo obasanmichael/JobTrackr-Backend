@@ -5,6 +5,11 @@ type EnvVars = {
   PORT?: string;
   RESUME_UPLOAD_MAX_BYTES?: string;
   RESUME_STORAGE_ROOT?: string;
+  AI_PROVIDER?: string;
+  OPENAI_API_KEY?: string;
+  OPENAI_MODEL?: string;
+  OPENAI_BASE_URL?: string;
+  AI_RESUME_REVIEW_TIMEOUT_MS?: string;
   CORS_ORIGIN?: string;
   THROTTLE_TTL_SECONDS?: string;
   THROTTLE_LIMIT?: string;
@@ -35,6 +40,43 @@ export function validateEnv(config: EnvVars): EnvVars {
     errors.push('RESUME_UPLOAD_MAX_BYTES must be a valid number.');
   } else if (Number(config.RESUME_UPLOAD_MAX_BYTES) <= 0) {
     errors.push('RESUME_UPLOAD_MAX_BYTES must be greater than zero.');
+  }
+
+  if (!config.AI_PROVIDER) {
+    config.AI_PROVIDER = 'mock';
+  }
+  const aiProviderMode = config.AI_PROVIDER.toLowerCase();
+  const allowedAiProviders = ['mock', 'openai'];
+  if (!allowedAiProviders.includes(aiProviderMode)) {
+    errors.push(
+      `AI_PROVIDER must be one of: ${allowedAiProviders.join(', ')}.`,
+    );
+  }
+
+  if (aiProviderMode === 'openai' && !config.OPENAI_API_KEY?.trim()) {
+    errors.push('OPENAI_API_KEY is required when AI_PROVIDER is openai.');
+  }
+
+  if (!config.OPENAI_MODEL?.trim()) {
+    config.OPENAI_MODEL = 'gpt-4o-mini';
+  }
+
+  if (!config.OPENAI_BASE_URL?.trim()) {
+    config.OPENAI_BASE_URL = 'https://api.openai.com/v1';
+  } else {
+    try {
+      new URL(config.OPENAI_BASE_URL.trim());
+    } catch {
+      errors.push('OPENAI_BASE_URL must be a valid URL.');
+    }
+  }
+
+  if (!config.AI_RESUME_REVIEW_TIMEOUT_MS) {
+    config.AI_RESUME_REVIEW_TIMEOUT_MS = '60000';
+  } else if (!/^\d+$/.test(config.AI_RESUME_REVIEW_TIMEOUT_MS)) {
+    errors.push('AI_RESUME_REVIEW_TIMEOUT_MS must be a valid number.');
+  } else if (Number(config.AI_RESUME_REVIEW_TIMEOUT_MS) <= 0) {
+    errors.push('AI_RESUME_REVIEW_TIMEOUT_MS must be greater than zero.');
   }
 
   if (config.PORT === undefined || config.PORT === '') {
