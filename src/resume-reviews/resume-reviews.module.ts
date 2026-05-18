@@ -1,13 +1,14 @@
 import { Module } from '@nestjs/common';
 import { AiModule } from '../ai/ai.module';
+import { AuthModule } from '../auth/auth.module';
+import { ResumeReviewsController } from './resume-reviews.controller';
+import { ResumeReviewQuotaService } from './resume-review-quota.service';
+import { ResumeReviewsService } from './resume-reviews.service';
 
-/**
- * Resume AI review HTTP API and orchestration (V2B.2+).
- */
 @Module({
-  imports: [AiModule],
-  controllers: [],
-  providers: [],
-  exports: [],
+  imports: [AiModule, AuthModule],
+  controllers: [ResumeReviewsController],
+  providers: [ResumeReviewQuotaService, ResumeReviewsService],
+  exports: [ResumeReviewsService],
 })
 export class ResumeReviewsModule {}

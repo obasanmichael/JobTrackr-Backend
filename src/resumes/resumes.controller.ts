@@ -27,6 +27,8 @@ import {
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUserDecorator } from '../common/decorators/current-user.decorator';
 import type { CurrentUser } from '../common/types/current-user.type';
+import { ResumeReviewResponseDto } from '../resume-reviews/dto/resume-review-response.dto';
+import { ResumeReviewsService } from '../resume-reviews/resume-reviews.service';
 import { CandidateProfileResponseDto } from './dto/candidate-profile-response.dto';
 import { ResumeResponseDto } from './dto/resume-response.dto';
 import { UpdateCandidateProfileDto } from './dto/update-candidate-profile.dto';
@@ -38,7 +40,10 @@ import { ResumesService } from './resumes.service';
 @ApiTags('resumes')
 @ApiBearerAuth('access-token')
 export class ResumesController {
-  constructor(private readonly resumesService: ResumesService) {}
+  constructor(
+    private readonly resumesService: ResumesService,
+    private readonly resumeReviewsService: ResumeReviewsService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'List resumes for the current user' })
@@ -118,6 +123,16 @@ export class ResumesController {
     @Body() dto: UpdateCandidateProfileDto,
   ): Promise<CandidateProfileResponseDto> {
     return this.resumesService.updateProfile(currentUser, resumeId, dto);
+  }
+
+  @Get(':id/reviews')
+  @ApiOperation({ summary: 'List AI resume reviews for this resume' })
+  @ApiOkResponse({ type: [ResumeReviewResponseDto] })
+  listResumeReviews(
+    @CurrentUserDecorator() currentUser: CurrentUser,
+    @Param('id', ParseUUIDPipe) resumeId: string,
+  ): Promise<ResumeReviewResponseDto[]> {
+    return this.resumeReviewsService.findAllForResume(currentUser, resumeId);
   }
 
   @Get(':id')

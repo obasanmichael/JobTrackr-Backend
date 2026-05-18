@@ -23,6 +23,7 @@ model User {
   resumes           Resume[]
   candidateProfiles CandidateProfile[]
   resumeReviews     ResumeReview[]
+  usageCounters     UsageCounter[]
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 }
@@ -111,7 +112,7 @@ model ResumeReview {
   resumeId        String
   resume          Resume             @relation(fields: [resumeId], references: [id], onDelete: Cascade)
   applicationId   String?
-  application     JobApplication?      @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+  application     JobApplication? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
   jobId           String?
   type            ResumeReviewType
   overallScore    Int?
@@ -134,6 +135,21 @@ model ResumeReview {
   @@index([userId])
   @@index([resumeId])
   @@index([applicationId])
+}
+
+model UsageCounter {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  featureKey  String
+  periodKey   String
+  count       Int      @default(0)
+  limitValue  Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, featureKey, periodKey])
+  @@index([userId])
 }
 
 model ApplicationEvent {

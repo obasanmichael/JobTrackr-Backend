@@ -10,6 +10,7 @@ type EnvVars = {
   OPENAI_MODEL?: string;
   OPENAI_BASE_URL?: string;
   AI_RESUME_REVIEW_TIMEOUT_MS?: string;
+  AI_RESUME_REVIEW_MONTHLY_LIMIT?: string;
   CORS_ORIGIN?: string;
   THROTTLE_TTL_SECONDS?: string;
   THROTTLE_LIMIT?: string;
@@ -77,6 +78,21 @@ export function validateEnv(config: EnvVars): EnvVars {
     errors.push('AI_RESUME_REVIEW_TIMEOUT_MS must be a valid number.');
   } else if (Number(config.AI_RESUME_REVIEW_TIMEOUT_MS) <= 0) {
     errors.push('AI_RESUME_REVIEW_TIMEOUT_MS must be greater than zero.');
+  }
+
+  if (!config.AI_RESUME_REVIEW_MONTHLY_LIMIT?.trim()) {
+    config.AI_RESUME_REVIEW_MONTHLY_LIMIT = '-1';
+  }
+  const quotaLim = config.AI_RESUME_REVIEW_MONTHLY_LIMIT.trim();
+  const quotaLower = quotaLim.toLowerCase();
+  if (
+    quotaLower !== '-1' &&
+    quotaLower !== 'unlimited' &&
+    !/^[1-9]\d*$/.test(quotaLim)
+  ) {
+    errors.push(
+      'AI_RESUME_REVIEW_MONTHLY_LIMIT must be -1, unlimited, or a positive integer.',
+    );
   }
 
   if (config.PORT === undefined || config.PORT === '') {
