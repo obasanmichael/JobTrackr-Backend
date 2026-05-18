@@ -28,6 +28,7 @@ import type {
   CreateResumeReviewDto,
   ResumeReviewsQueryDto,
 } from './dto/create-resume-review.dto';
+import type { ResumeReviewListResponseDto } from './dto/resume-review-list-response.dto';
 import type { ResumeReviewResponseDto } from './dto/resume-review-response.dto';
 import { ResumeReviewQuotaService } from './resume-review-quota.service';
 
@@ -115,12 +116,14 @@ export class ResumeReviewsService {
         );
       }
 
-      const updated = await this.prisma.resumeReview.update({
-        where: { id: review.id },
-        data: ResumeReviewsService.completedReviewUpdate(aiResult),
+      const updated = await this.prisma.$transaction(async (tx) => {
+        const row = await tx.resumeReview.update({
+          where: { id: review.id },
+          data: ResumeReviewsService.completedReviewUpdate(aiResult),
+        });
+        await this.quota.recordSuccessfulAiResumeReview(user.userId, tx);
+        return row;
       });
-
-      await this.quota.recordSuccessfulAiResumeReview(user.userId);
 
       return ResumeReviewsService.toDto(updated);
     } catch (error) {
@@ -160,19 +163,28 @@ export class ResumeReviewsService {
   async findAllForUser(
     user: CurrentUser,
     query: ResumeReviewsQueryDto,
-  ): Promise<ResumeReviewResponseDto[]> {
+  ): Promise<ResumeReviewListResponseDto> {
     const page = query.page ?? 1;
     const limit = Math.min(query.limit ?? 20, 50);
     const skip = (page - 1) * limit;
+    const where = ResumeReviewsService.reviewListWhere(user.userId, query);
 
-    const rows = await this.prisma.resumeReview.findMany({
-      where: { userId: user.userId },
-      orderBy: { createdAt: 'desc' },
-      skip,
-      take: limit,
-    });
+    const [total, rows] = await this.prisma.$transaction([
+      this.prisma.resumeReview.count({ where }),
+      this.prisma.resumeReview.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+    ]);
 
-    return rows.map((row) => ResumeReviewsService.toDto(row));
+    return {
+      items: rows.map((row) => ResumeReviewsService.toDto(row)),
+      total,
+      page,
+      limit,
+    };
   }
 
   async findOne(
@@ -191,7 +203,8 @@ export class ResumeReviewsService {
   async findAllForResume(
     user: CurrentUser,
     resumeId: string,
-  ): Promise<ResumeReviewResponseDto[]> {
+    query: ResumeReviewsQueryDto,
+  ): Promise<ResumeReviewListResponseDto> {
     const resume = await this.prisma.resume.findFirst({
       where: { id: resumeId, userId: user.userId },
     });
@@ -199,12 +212,48 @@ export class ResumeReviewsService {
       throw new NotFoundException('Resume not found');
     }
 
-    const rows = await this.prisma.resumeReview.findMany({
-      where: { resumeId, userId: user.userId },
-      orderBy: { createdAt: 'desc' },
-    });
+    const page = query.page ?? 1;
+    const limit = Math.min(query.limit ?? 20, 50);
+    const skip = (page - 1) * limit;
+    const where = ResumeReviewsService.reviewListWhere(
+      user.userId,
+      query,
+      resumeId,
+    );
 
-    return rows.map((row) => ResumeReviewsService.toDto(row));
+    const [total, rows] = await this.prisma.$transaction([
+      this.prisma.resumeReview.count({ where }),
+      this.prisma.resumeReview.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+    ]);
+
+    return {
+      items: rows.map((row) => ResumeReviewsService.toDto(row)),
+      total,
+      page,
+      limit,
+    };
+  }
+
+  private static reviewListWhere(
+    userId: string,
+    query: ResumeReviewsQueryDto,
+    scopedResumeId?: string,
+  ): Prisma.ResumeReviewWhereInput {
+    return {
+      userId,
+      ...(scopedResumeId !== undefined
+        ? { resumeId: scopedResumeId }
+        : query.resumeId !== undefined
+          ? { resumeId: query.resumeId }
+          : {}),
+      ...(query.type !== undefined ? { type: query.type } : {}),
+      ...(query.status !== undefined ? { status: query.status } : {}),
+    };
   }
 
   private static completedReviewUpdate(

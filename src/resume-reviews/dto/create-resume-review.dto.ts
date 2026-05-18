@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ResumeReviewType } from '@prisma/client';
+import { ResumeReviewStatus, ResumeReviewType } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
   IsEnum,
@@ -30,7 +30,9 @@ export class CreateResumeReviewDto {
     description:
       'Required when type is JOB_SPECIFIC — must belong to the signed-in user.',
   })
-  @ValidateIf((o: CreateResumeReviewDto) => o.type === ResumeReviewType.JOB_SPECIFIC)
+  @ValidateIf(
+    (o: CreateResumeReviewDto) => o.type === ResumeReviewType.JOB_SPECIFIC,
+  )
   @IsNotEmpty({ message: 'applicationId is required for JOB_SPECIFIC reviews' })
   @IsUUID()
   applicationId?: string;
@@ -69,4 +71,26 @@ export class ResumeReviewsQueryDto {
   @Min(1)
   @Max(50)
   limit?: number;
+
+  @ApiPropertyOptional({
+    format: 'uuid',
+    description:
+      'When set, only reviews for this resume (must still belong to the user)',
+  })
+  @IsOptional()
+  @IsUUID()
+  resumeId?: string;
+
+  @ApiPropertyOptional({ enum: ResumeReviewType, enumName: 'ResumeReviewType' })
+  @IsOptional()
+  @IsEnum(ResumeReviewType)
+  type?: ResumeReviewType;
+
+  @ApiPropertyOptional({
+    enum: ResumeReviewStatus,
+    enumName: 'ResumeReviewStatus',
+  })
+  @IsOptional()
+  @IsEnum(ResumeReviewStatus)
+  status?: ResumeReviewStatus;
 }

@@ -24,6 +24,7 @@ import {
   CreateResumeReviewDto,
   ResumeReviewsQueryDto,
 } from './dto/create-resume-review.dto';
+import { ResumeReviewListResponseDto } from './dto/resume-review-list-response.dto';
 import { ResumeReviewResponseDto } from './dto/resume-review-response.dto';
 import { ResumeReviewsService } from './resume-reviews.service';
 
@@ -49,12 +50,15 @@ export class ResumeReviewsController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'List AI resume reviews for the current user' })
-  @ApiOkResponse({ type: [ResumeReviewResponseDto] })
+  @ApiOperation({
+    summary:
+      'List AI resume reviews (paginated history; optional filters by resume, type, status)',
+  })
+  @ApiOkResponse({ type: ResumeReviewListResponseDto })
   findAll(
     @CurrentUserDecorator() user: CurrentUser,
     @Query() query: ResumeReviewsQueryDto,
-  ): Promise<ResumeReviewResponseDto[]> {
+  ): Promise<ResumeReviewListResponseDto> {
     return this.resumeReviewsService.findAllForUser(user, query);
   }
 

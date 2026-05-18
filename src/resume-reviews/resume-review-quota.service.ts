@@ -41,7 +41,10 @@ export class ResumeReviewQuotaService {
     }
   }
 
-  async recordSuccessfulAiResumeReview(userId: string): Promise<void> {
+  async recordSuccessfulAiResumeReview(
+    userId: string,
+    db: Pick<PrismaService, 'usageCounter'> = this.prisma,
+  ): Promise<void> {
     const limit = ResumeReviewQuotaService.resolveMonthlySuccessLimit(
       this.configService.get<string>('AI_RESUME_REVIEW_MONTHLY_LIMIT'),
     );
@@ -51,7 +54,7 @@ export class ResumeReviewQuotaService {
 
     const periodKey = utcMonthPeriodKey();
 
-    await this.prisma.usageCounter.upsert({
+    await db.usageCounter.upsert({
       where: {
         userId_featureKey_periodKey: {
           userId,

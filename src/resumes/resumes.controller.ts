@@ -9,6 +9,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -27,7 +28,8 @@ import {
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUserDecorator } from '../common/decorators/current-user.decorator';
 import type { CurrentUser } from '../common/types/current-user.type';
-import { ResumeReviewResponseDto } from '../resume-reviews/dto/resume-review-response.dto';
+import { ResumeReviewsQueryDto } from '../resume-reviews/dto/create-resume-review.dto';
+import { ResumeReviewListResponseDto } from '../resume-reviews/dto/resume-review-list-response.dto';
 import { ResumeReviewsService } from '../resume-reviews/resume-reviews.service';
 import { CandidateProfileResponseDto } from './dto/candidate-profile-response.dto';
 import { ResumeResponseDto } from './dto/resume-response.dto';
@@ -126,13 +128,21 @@ export class ResumesController {
   }
 
   @Get(':id/reviews')
-  @ApiOperation({ summary: 'List AI resume reviews for this resume' })
-  @ApiOkResponse({ type: [ResumeReviewResponseDto] })
+  @ApiOperation({
+    summary:
+      'List AI resume reviews for this resume (paginated; optional type/status filters)',
+  })
+  @ApiOkResponse({ type: ResumeReviewListResponseDto })
   listResumeReviews(
     @CurrentUserDecorator() currentUser: CurrentUser,
     @Param('id', ParseUUIDPipe) resumeId: string,
-  ): Promise<ResumeReviewResponseDto[]> {
-    return this.resumeReviewsService.findAllForResume(currentUser, resumeId);
+    @Query() query: ResumeReviewsQueryDto,
+  ): Promise<ResumeReviewListResponseDto> {
+    return this.resumeReviewsService.findAllForResume(
+      currentUser,
+      resumeId,
+      query,
+    );
   }
 
   @Get(':id')
