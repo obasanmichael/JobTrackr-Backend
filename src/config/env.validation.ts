@@ -3,6 +3,8 @@ type NodeEnv = 'development' | 'test' | 'production';
 type EnvVars = {
   NODE_ENV?: string;
   PORT?: string;
+  RESUME_UPLOAD_MAX_BYTES?: string;
+  RESUME_STORAGE_ROOT?: string;
   CORS_ORIGIN?: string;
   THROTTLE_TTL_SECONDS?: string;
   THROTTLE_LIMIT?: string;
@@ -24,6 +26,15 @@ export function validateEnv(config: EnvVars): EnvVars {
 
   if (!ALLOWED_NODE_ENVS.includes(config.NODE_ENV as NodeEnv)) {
     errors.push(`NODE_ENV must be one of: ${ALLOWED_NODE_ENVS.join(', ')}.`);
+  }
+
+  const defaultResumeMaxBytes = 5 * 1024 * 1024;
+  if (!config.RESUME_UPLOAD_MAX_BYTES) {
+    config.RESUME_UPLOAD_MAX_BYTES = String(defaultResumeMaxBytes);
+  } else if (!/^\d+$/.test(config.RESUME_UPLOAD_MAX_BYTES)) {
+    errors.push('RESUME_UPLOAD_MAX_BYTES must be a valid number.');
+  } else if (Number(config.RESUME_UPLOAD_MAX_BYTES) <= 0) {
+    errors.push('RESUME_UPLOAD_MAX_BYTES must be greater than zero.');
   }
 
   if (config.PORT === undefined || config.PORT === '') {

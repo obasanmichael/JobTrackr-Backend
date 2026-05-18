@@ -12,16 +12,66 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  name         String
-  email        String   @unique
-  passwordHash String
-  applications JobApplication[]
-  events       ApplicationEvent[]
-  reminders    Reminder[]
-  interviews   Interview[]
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id               String             @id @default(uuid())
+  name             String
+  email            String             @unique
+  passwordHash     String
+  applications     JobApplication[]
+  events           ApplicationEvent[]
+  reminders        Reminder[]
+  interviews       Interview[]
+  resumes          Resume[]
+  candidateProfiles  CandidateProfile[]
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+}
+
+model Resume {
+  id                String               @id @default(uuid())
+  userId             String
+  user               User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fileName           String
+  fileType           String
+  fileSize           Int
+  fileUrl            String?
+  storageKey         String               @unique
+  status             ResumeParseStatus    @default(UPLOADED)
+  parsedText         String?
+  parseError         String?
+  isActive           Boolean              @default(false)
+  candidateProfile   CandidateProfile?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+
+  @@index([userId])
+}
+
+model CandidateProfile {
+  id                   String    @id @default(uuid())
+  userId               String
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resumeId             String    @unique
+  resume               Resume    @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  headline             String?
+  summary              String?
+  skills               Json?
+  tools                Json?
+  roles                Json?
+  industries           Json?
+  yearsOfExperience    Int?
+  locations            Json?
+  workModes            Json?
+  education            Json?
+  certifications       Json?
+  projects             Json?
+  experience           Json?
+  rawExtractedData     Json?
+  extractionPipeline   String?
+  isConfirmed          Boolean   @default(false)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@index([userId])
 }
 
 model JobApplication {
@@ -160,4 +210,12 @@ enum InterviewType {
   TAKE_HOME
   LIVE_CODING
   OTHER
+}
+
+enum ResumeParseStatus {
+  UPLOADED
+  PARSING
+  PARSED
+  FAILED
+  ARCHIVED
 }

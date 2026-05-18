@@ -46,6 +46,9 @@ lerna-debug.log*
 .temp
 .tmp
 
+# Local resume blob storage (see RESUME_STORAGE_ROOT)
+var/
+
 # Runtime data
 pids
 *.pid

@@ -5,12 +5,14 @@ import { seconds, ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ApplicationEventsModule } from './application-events/application-events.module';
 import { ApplicationsModule } from './applications/applications.module';
 import { AuthModule } from './auth/auth.module';
+import { CandidateProfilesModule } from './candidate-profiles/candidate-profiles.module';
 import { validateEnv } from './config/env.validation';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { HealthModule } from './health/health.module';
 import { InterviewsModule } from './interviews/interviews.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RemindersModule } from './reminders/reminders.module';
+import { ResumesModule } from './resumes/resumes.module';
 import { UsersModule } from './users/users.module';
 
 @Module({
@@ -40,6 +42,8 @@ import { UsersModule } from './users/users.module';
     HealthModule,
     AuthModule,
     UsersModule,
+    CandidateProfilesModule,
+    ResumesModule,
     ApplicationsModule,
     ApplicationEventsModule,
     RemindersModule,
