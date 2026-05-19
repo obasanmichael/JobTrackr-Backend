@@ -1,0 +1,1 @@
+export const JOB_SOURCE_SYNC_PORT = Symbol('JOB_SOURCE_SYNC_PORT');

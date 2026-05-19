@@ -9,6 +9,7 @@ import { validateEnv } from './config/env.validation';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { HealthModule } from './health/health.module';
 import { InterviewsModule } from './interviews/interviews.module';
+import { JobSourcesModule } from './job-sources/job-sources.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RemindersModule } from './reminders/reminders.module';
 import { JobsModule } from './jobs/jobs.module';
@@ -45,6 +46,7 @@ import { UsersModule } from './users/users.module';
     UsersModule,
     ResumesModule,
     ResumeReviewsModule,
+    JobSourcesModule,
     JobsModule,
     ApplicationsModule,
     ApplicationEventsModule,

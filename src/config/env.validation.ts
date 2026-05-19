@@ -19,6 +19,8 @@ type EnvVars = {
   JWT_ACCESS_EXPIRES_IN?: string;
   JWT_ISSUER?: string;
   JWT_AUDIENCE?: string;
+  /** Comma-separated user UUIDs allowed to access /api/v1/admin/* routes (temporary until Phase V2G roles). */
+  ADMIN_USER_IDS?: string;
 };
 
 const ALLOWED_NODE_ENVS: NodeEnv[] = ['development', 'test', 'production'];
@@ -165,6 +167,22 @@ export function validateEnv(config: EnvVars): EnvVars {
     if (invalidOrigins.length > 0) {
       errors.push(
         `CORS_ORIGIN contains invalid URL(s): ${invalidOrigins.join(', ')}.`,
+      );
+    }
+  }
+
+  const uuidLooseRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+  if (config.ADMIN_USER_IDS?.trim()) {
+    const ids = config.ADMIN_USER_IDS.split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (ids.length === 0) {
+      errors.push('ADMIN_USER_IDS, if set, cannot be blank.');
+    } else if (ids.some((id) => !uuidLooseRegex.test(id))) {
+      errors.push(
+        'ADMIN_USER_IDS must be a comma-separated list of UUID strings.',
       );
     }
   }

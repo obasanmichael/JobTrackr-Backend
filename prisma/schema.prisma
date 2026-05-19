@@ -281,3 +281,92 @@ enum ResumeReviewStatus {
   COMPLETED
   FAILED
 }
+
+/// External job ingestion registry (§5.3 — job_sources)
+model JobSource {
+  id               String           @id @default(uuid())
+  name             String
+  type             JobSourceType
+  baseUrl          String?
+  isActive         Boolean          @default(true)
+  requiresApiKey   Boolean          @default(false)
+  lastSyncAt       DateTime?
+  lastSuccessAt    DateTime?
+  lastErrorAt      DateTime?
+  lastErrorMessage String?
+  /** Per-ATS opaque settings (board_token, Lever site slug, etc.) — Phase A ingest plan. */
+  config           Json?
+  externalJobs     ExternalJob[]
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@index([isActive])
+}
+
+/// Normalized job posting (§5.3 — external_jobs)
+model ExternalJob {
+  id              String                       @id @default(uuid())
+  sourceId        String
+  source          JobSource                    @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  sourceName      String
+  externalJobId   String
+  title           String
+  company         String
+  location        String?
+  country         String?
+  remoteType      ExternalJobRemoteType        @default(UNSPECIFIED)
+  salaryMin       Int?
+  salaryMax       Int?
+  currency        String?                     @default("USD")
+  description     String?
+  requirements    String?
+  employmentType ExternalJobEmploymentType     @default(UNSPECIFIED)
+  experienceLevel ExternalExperienceLevel      @default(UNSPECIFIED)
+  applicationUrl  String?
+  postedAt        DateTime?
+  expiresAt       DateTime?
+  rawPayload      Json?
+  contentHash     String?
+  isActive        Boolean                     @default(true)
+  createdAt       DateTime                    @default(now())
+  updatedAt       DateTime                    @updatedAt
+
+  @@unique([sourceId, externalJobId])
+  @@index([sourceId])
+  @@index([isActive])
+  @@index([postedAt])
+  @@index([company])
+  @@index([contentHash])
+}
+
+enum JobSourceType {
+  API
+  ATS_FEED
+  MANUAL
+  SCRAPER_LATER
+}
+
+enum ExternalJobRemoteType {
+  REMOTE
+  HYBRID
+  ONSITE
+  UNSPECIFIED
+}
+
+enum ExternalJobEmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+  TEMPORARY
+  UNSPECIFIED
+}
+
+enum ExternalExperienceLevel {
+  ENTRY
+  MID
+  SENIOR
+  LEAD
+  EXECUTIVE
+  UNSPECIFIED
+}
