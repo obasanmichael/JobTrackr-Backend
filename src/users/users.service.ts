@@ -8,7 +8,9 @@ import { UserProfileDto } from './dto/user-profile.dto';
 export class UsersService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async getCurrentUserProfile(currentUser: CurrentUser): Promise<UserProfileDto> {
+  async getCurrentUserProfile(
+    currentUser: CurrentUser,
+  ): Promise<UserProfileDto> {
     const user = await this.prismaService.user.findUnique({
       where: { id: currentUser.userId },
     });

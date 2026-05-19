@@ -20,7 +20,9 @@ export type ResumeReviewAiResult = {
 };
 
 export interface ResumeReviewAiPort {
-  generateGeneralReview(input: ResumeReviewAiInput): Promise<ResumeReviewAiResult>;
+  generateGeneralReview(
+    input: ResumeReviewAiInput,
+  ): Promise<ResumeReviewAiResult>;
 
   generateJobSpecificReview(
     input: ResumeReviewAiInput,

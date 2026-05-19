@@ -20,7 +20,9 @@ export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) {}
 
   @Get('summary')
-  @ApiOperation({ summary: 'Get dashboard summary metrics and activity slices' })
+  @ApiOperation({
+    summary: 'Get dashboard summary metrics and activity slices',
+  })
   @ApiOkResponse({ type: DashboardSummaryResponseDto })
   @ApiUnauthorizedResponse({ description: 'Missing or invalid token.' })
   getSummary(

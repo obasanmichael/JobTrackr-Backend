@@ -99,7 +99,9 @@ export class ResumeReviewsService {
         resumeId: resume.id,
         applicationId: linkedApplicationId,
         jobId:
-          dto.type === ResumeReviewType.JOB_SPECIFIC ? dto.jobId ?? null : null,
+          dto.type === ResumeReviewType.JOB_SPECIFIC
+            ? (dto.jobId ?? null)
+            : null,
         type: dto.type,
         status: ResumeReviewStatus.PENDING,
       },
@@ -268,15 +270,14 @@ export class ResumeReviewsService {
       keywordScore: structured.keywordScore ?? null,
       structureScore: structured.structureScore ?? null,
       clarityScore: structured.clarityScore ?? null,
-      strengths: structured.strengths as unknown as Prisma.InputJsonValue,
-      weaknesses: structured.weaknesses as unknown as Prisma.InputJsonValue,
-      missingKeywords:
-        structured.missingKeywords as unknown as Prisma.InputJsonValue,
-      suggestions: structured.suggestions as unknown as Prisma.InputJsonValue,
+      strengths: structured.strengths,
+      weaknesses: structured.weaknesses,
+      missingKeywords: structured.missingKeywords,
+      suggestions: structured.suggestions,
       improvedBullets:
         structured.improvedBullets !== undefined
-          ? (structured.improvedBullets as unknown as Prisma.InputJsonValue)
-          : ([] as unknown as Prisma.InputJsonValue),
+          ? structured.improvedBullets
+          : [],
       summary: structured.summary ?? null,
       rawAiOutput: {
         structured,
@@ -331,6 +332,6 @@ export class ResumeReviewsService {
     if (typeof value !== 'object' || Array.isArray(value)) {
       return null;
     }
-    return value as Record<string, unknown>;
+    return value;
   }
 }

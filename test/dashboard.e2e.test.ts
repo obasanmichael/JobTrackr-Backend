@@ -63,7 +63,9 @@ describe('Dashboard (e2e)', () => {
   });
 
   it('returns 401 for dashboard summary without auth', async () => {
-    await request(app.getHttpServer()).get('/api/v1/dashboard/summary').expect(401);
+    await request(app.getHttpServer())
+      .get('/api/v1/dashboard/summary')
+      .expect(401);
   });
 
   it('returns stable summary shape and only user-owned data', async () => {

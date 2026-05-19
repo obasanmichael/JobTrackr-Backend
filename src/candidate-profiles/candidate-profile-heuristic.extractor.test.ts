@@ -5,7 +5,9 @@ describe('extractCandidateProfileDraft', () => {
     const draft = extractCandidateProfileDraft('');
     expect(draft.extractionPipeline).toBe('heuristic:v1');
     expect(draft.skills).toEqual([]);
-    expect(draft.rawExtractedData).toMatchObject({ reason: 'empty_parsed_text' });
+    expect(draft.rawExtractedData).toMatchObject({
+      reason: 'empty_parsed_text',
+    });
   });
 
   it('pulls skills section and years hint', () => {

@@ -27,7 +27,9 @@ describe('Applications (e2e)', () => {
 
   const authHeader = (token: string) => ({ Authorization: `Bearer ${token}` });
 
-  const buildApplicationPayload = (overrides: Record<string, unknown> = {}) => ({
+  const buildApplicationPayload = (
+    overrides: Record<string, unknown> = {},
+  ) => ({
     jobTitle: 'Frontend Engineer',
     companyName: 'Acme Labs',
     ...overrides,
@@ -211,7 +213,10 @@ describe('Applications (e2e)', () => {
       .expect(({ body }: { body: Array<{ id: string }> }) => {
         const ids = body.map((item) => item.id);
         expect(ids).toEqual(
-          expect.arrayContaining([first.body.id as string, third.body.id as string]),
+          expect.arrayContaining([
+            first.body.id as string,
+            third.body.id as string,
+          ]),
         );
         expect(ids).not.toContain(second.body.id as string);
       });
@@ -229,11 +234,17 @@ describe('Applications (e2e)', () => {
       .get('/api/v1/applications?sort=deadline')
       .set(authHeader(user.accessToken))
       .expect(200)
-      .expect(({ body }: { body: Array<{ id: string; deadline: string | null }> }) => {
-        expect(body[0].id).toBe(third.body.id as string);
-        expect(body[1].id).toBe(first.body.id as string);
-        expect(body[2].id).toBe(second.body.id as string);
-        expect(body[2].deadline).toBeNull();
-      });
+      .expect(
+        ({
+          body,
+        }: {
+          body: Array<{ id: string; deadline: string | null }>;
+        }) => {
+          expect(body[0].id).toBe(third.body.id as string);
+          expect(body[1].id).toBe(first.body.id as string);
+          expect(body[2].id).toBe(second.body.id as string);
+          expect(body[2].deadline).toBeNull();
+        },
+      );
   });
 });

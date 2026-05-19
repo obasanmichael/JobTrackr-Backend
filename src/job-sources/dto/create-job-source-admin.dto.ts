@@ -1,6 +1,14 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { JobSourceType } from '@prisma/client';
-import { Allow, IsBoolean, IsEnum, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import {
+  Allow,
+  IsBoolean,
+  IsEnum,
+  IsOptional,
+  IsString,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 export class CreateJobSourceAdminDto {
   @ApiProperty({ maxLength: 200 })
@@ -13,7 +21,9 @@ export class CreateJobSourceAdminDto {
   @IsEnum(JobSourceType)
   type!: JobSourceType;
 
-  @ApiPropertyOptional({ description: 'Optional public board / API root URL hint' })
+  @ApiPropertyOptional({
+    description: 'Optional public board / API root URL hint',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(2048)

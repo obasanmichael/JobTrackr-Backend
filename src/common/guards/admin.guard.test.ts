@@ -33,7 +33,9 @@ describe('AdminGuard', () => {
   it('throws when user id is not listed', () => {
     const guard = new AdminGuard({
       get: (key: string) =>
-        key === 'ADMIN_USER_IDS' ? '11111111-1111-1111-9111-111111111111' : undefined,
+        key === 'ADMIN_USER_IDS'
+          ? '11111111-1111-1111-9111-111111111111'
+          : undefined,
     } as unknown as ConfigService);
 
     expect(() =>

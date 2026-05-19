@@ -72,7 +72,9 @@ export class AuthController {
   @ApiBearerAuth('access-token')
   @ApiOkResponse({ type: UserProfileDto })
   @ApiUnauthorizedResponse({ description: 'Missing or invalid token.' })
-  me(@CurrentUserDecorator() currentUser: CurrentUser): Promise<UserProfileDto> {
+  me(
+    @CurrentUserDecorator() currentUser: CurrentUser,
+  ): Promise<UserProfileDto> {
     return this.authService.getMe(currentUser);
   }
 }

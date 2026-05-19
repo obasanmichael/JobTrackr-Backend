@@ -64,7 +64,10 @@ export class RemindersService {
   ): Promise<ReminderResponseDto> {
     const existing = await this.getOwnedReminderOrThrow(currentUser.userId, id);
 
-    if (payload.applicationId && payload.applicationId !== existing.applicationId) {
+    if (
+      payload.applicationId &&
+      payload.applicationId !== existing.applicationId
+    ) {
       await this.ensureApplicationOwnership(
         currentUser.userId,
         payload.applicationId,

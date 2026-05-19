@@ -65,7 +65,9 @@ describe('AuthService', () => {
 
       expect(response.accessToken).toBe('signed-jwt-token');
       expect(response.user.email).toBe('test@example.com');
-      expect((response.user as Record<string, unknown>).passwordHash).toBeUndefined();
+      expect(
+        (response.user as Record<string, unknown>).passwordHash,
+      ).toBeUndefined();
     });
 
     it('rejects duplicate email with a safe conflict response', async () => {
@@ -178,7 +180,9 @@ describe('AuthService', () => {
       });
 
       expect(response.email).toBe('test@example.com');
-      expect((response as Record<string, unknown>).passwordHash).toBeUndefined();
+      expect(
+        (response as Record<string, unknown>).passwordHash,
+      ).toBeUndefined();
     });
   });
 
@@ -191,9 +195,9 @@ describe('AuthService', () => {
       await expect(service['verifyPassword'](hash, plainText)).resolves.toBe(
         true,
       );
-      await expect(service['verifyPassword'](hash, 'wrong-password')).resolves.toBe(
-        false,
-      );
+      await expect(
+        service['verifyPassword'](hash, 'wrong-password'),
+      ).resolves.toBe(false);
     });
   });
 });

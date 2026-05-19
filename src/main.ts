@@ -33,9 +33,9 @@ async function bootstrap() {
   );
   app.useGlobalFilters(new HttpExceptionFilter());
   app.use(helmet());
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+
   app.use(compression());
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+
   app.use(cookieParser());
 
   const swaggerConfig = new DocumentBuilder()

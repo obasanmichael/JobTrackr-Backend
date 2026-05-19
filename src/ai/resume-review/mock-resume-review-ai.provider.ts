@@ -33,7 +33,9 @@ const MOCK_STRUCTURED_GENERAL: ResumeReviewStructuredOutput = {
 
 @Injectable()
 export class MockResumeReviewAiProvider implements ResumeReviewAiPort {
-  async generateGeneralReview(input: ResumeReviewAiInput): Promise<ResumeReviewAiResult> {
+  async generateGeneralReview(
+    input: ResumeReviewAiInput,
+  ): Promise<ResumeReviewAiResult> {
     void input;
     return {
       structured: { ...MOCK_STRUCTURED_GENERAL },

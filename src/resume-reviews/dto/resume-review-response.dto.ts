@@ -1,8 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  ResumeReviewStatus,
-  ResumeReviewType,
-} from '@prisma/client';
+import { ResumeReviewStatus, ResumeReviewType } from '@prisma/client';
 
 export class ResumeReviewResponseDto {
   @ApiProperty({ format: 'uuid' })
@@ -17,7 +14,9 @@ export class ResumeReviewResponseDto {
   @ApiPropertyOptional({ format: 'uuid' })
   applicationId!: string | null;
 
-  @ApiPropertyOptional({ description: 'External/normalized job id when connected' })
+  @ApiPropertyOptional({
+    description: 'External/normalized job id when connected',
+  })
   jobId!: string | null;
 
   @ApiProperty({ enum: ResumeReviewType })

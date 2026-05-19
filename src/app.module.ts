@@ -28,8 +28,12 @@ import { UsersModule } from './users/users.module';
     ThrottlerModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
-        const ttlSeconds = Number(configService.get<string>('THROTTLE_TTL_SECONDS') ?? '60');
-        const limit = Number(configService.get<string>('THROTTLE_LIMIT') ?? '100');
+        const ttlSeconds = Number(
+          configService.get<string>('THROTTLE_TTL_SECONDS') ?? '60',
+        );
+        const limit = Number(
+          configService.get<string>('THROTTLE_LIMIT') ?? '100',
+        );
 
         return [
           {

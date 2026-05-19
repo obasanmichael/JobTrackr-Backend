@@ -5,7 +5,7 @@ import type { JobSourceSyncPort } from './job-source-sync.port';
 @Injectable()
 export class NoopJobSourceSyncProvider implements JobSourceSyncPort {
   fetchSnapshot(
-    _source: Pick<
+    source: Pick<
       JobSource,
       | 'id'
       | 'name'
@@ -16,6 +16,7 @@ export class NoopJobSourceSyncProvider implements JobSourceSyncPort {
       | 'config'
     >,
   ): Promise<{ rawListings: readonly unknown[] }> {
+    void source;
     return Promise.resolve({ rawListings: [] });
   }
 }

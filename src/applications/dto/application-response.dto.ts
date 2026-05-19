@@ -1,5 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ApplicationSource, ApplicationStatus, WorkMode } from './application.enums';
+import {
+  ApplicationSource,
+  ApplicationStatus,
+  WorkMode,
+} from './application.enums';
 
 export class ApplicationResponseDto {
   @ApiProperty()

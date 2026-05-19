@@ -8,7 +8,9 @@ export class ResumeLocalStorageService {
   private readonly rootAbsolute: string;
 
   constructor(private readonly configService: ConfigService) {
-    const configuredRoot = this.configService.get<string>('RESUME_STORAGE_ROOT');
+    const configuredRoot = this.configService.get<string>(
+      'RESUME_STORAGE_ROOT',
+    );
     const fallback = path.join(process.cwd(), 'var', 'jobtrackr-resumes');
     this.rootAbsolute = path.resolve(configuredRoot?.trim() || fallback);
   }

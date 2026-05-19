@@ -42,9 +42,9 @@
 
 - [x] **A.1–A.2**: `JobSource.config` (`Json?`) + migration **`20260619104500_job_source_config`**.
 - [x] **A.3**: **`config`** on **`JobSourceAdminResponseDto`**; **`POST /api/v1/admin/job-sources`**; **`PATCH /api/v1/admin/job-sources/:id`** (explicit **`config: null`** clears SQL column).
-- [ ] **A.4**: appendix below — flesh out Greenhouse/Lever payloads when adapters land.
+- [x] **A.4**: appendix lists Greenhouse/Lever **`provider` / slug** keys (**§ Appendix**).
 
-**Exit:** At least one **`JobSource`** row can carry e.g. Greenhouse **`board_token`** or Lever **`site_slug`** in DB config.
+**Exit:** At least one **`JobSource`** row can carry Greenhouse **`board_token`** / Lever **`site`** (slug) in **`config`** and route to ingest adapters (**Phase C**).
 
 ---
 
@@ -58,6 +58,13 @@
 | **B.2** | **`normalizeRawToExternalJob(source, raw): Omit<ExternalJob, 'id', ...>`** pure functions under e.g. `job-sources/normalization/` with unit tests per provider family. |
 | **B.3** | **`persistBatch(sourceId, sourceName, rows[])`**: `upsert` on **`@@unique([sourceId, externalJobId])`**, update title/company/applicationUrl/`postedAt`/`rawPayload`/enums mapping. Wrap in **`$transaction`** for batch chunks (e.g. 100 rows) if needed. |
 | **B.4** | On completion: **`lastSuccessAt`**, **`lastSyncAt`**; on failure: **`lastErrorAt`**, **`lastErrorMessage`** (truncate for DB). |
+
+### Phase B completion (implemented)
+
+- [x] **B.1** — **`JobIngestOrchestrationService`** (`job-ingest-orchestration.service.ts`): **`PrismaService`** + **`JOB_SOURCE_SYNC_PORT`**.
+- [x] **B.2** — **`genericJobListingSchema` / `parseGenericJobListing`** + **`buildExternalJobUpsertArgs`** under **`job-sources/normalization/`**.
+- [x] **B.3** — Chunked **`$transaction`** (default chunk size **50**) of **`externalJob.upsert`** on **`@@unique([sourceId, externalJobId])`**; persists **`rawPayload`** per listing.
+- [x] **B.4** — Success clears **`lastError*`** and sets **`lastSyncAt`** + **`lastSuccessAt`**; failures set **`lastError*`** + throw **`502`** (**`BadGatewayException`**); invalid rows increment **`skippedInvalid`** only.
 
 **Exit:** Runner can be invoked from Nest with a **`JobSource` id** and writes real **`ExternalJob`** rows (wired to first real adapter in Phase C).
 
@@ -82,7 +89,14 @@
 | **C.x.3** | Unit tests using **fixture JSON** captured from sandbox responses (sanitize PII before commit). |
 | **C.x.4** | **`JobSourceRegistry`** maps **`JobSource.type`** (+ optional subtype) → correct **`JobSourceSyncPort`** implementation (**multi-provider injection**via Nest factories or **`Map`** of implementations). Replace single **`NoopJobSourceSyncProvider`** as sole binding when wiring real providers. |
 
-**Exit:** Greenhouse + at least one more provider OR USAJOBS behind feature flag env.
+**Exit:** Greenhouse + Lever wired via **`RegistryJobSourceSyncProvider`** (**`JOB_SOURCE_SYNC_PORT`**); further providers stay optional.
+
+### Phase C completion (**C.1 + C.2** implemented)
+
+- [x] **C.x.1–C.x.2** — **`GreenhouseJobSourceSyncProvider`** + **`LeverJobSourceSyncProvider`**: **`axios`** + timeout + **`User-Agent`**; map HTTP payloads → **`genericJobListingSchema`**-compatible **`rawListings`**.
+- [x] **C.x.3** — Unit tests (**axios** mocks, Greenhouse JSON fixture under **`sync/fixtures/`**, mapper coverage).
+- [x] **C.x.4** — **`RegistryJobSourceSyncProvider`** + **`resolveJobSourceIngestProvider`**; unknown / unconfigured **`config`** delegates to **`NoopJobSourceSyncProvider`** (no **`JobSource`** type enum explosion).
+- [ ] **C.3–C.5** — Ashby, USAJOBS, SmartRecruiters (later).
 
 ---
 
@@ -140,19 +154,28 @@ _Not backend-only; tracked here for end-to-end story._
 
 Populate as adapters ship; validators can use **zod** per **`type`**.
 
-### Greenhouse (illustrative)
+Routing today:
+
+- Omit **`provider`**: ingest infers **`GREENHOUSE`** when **`board_token`** is set (non‑empty string) and **`LEVER`** when **`site`** slug is set. If both conflict, prefer setting explicit **`provider`**.
+- Prefer explicit **`provider`**: **`"GREENHOUSE"`** \| **`"LEVER"`** (aliases: **`ingestProvider`**).
+
+### Greenhouse
 
 ```json
 {
+  "provider": "GREENHOUSE",
   "board_token": "<public_board_token>",
   "api_base_override": null
 }
 ```
 
-### Lever (illustrative)
+`api_base_override` is optional HTTPS root (e.g. alternate board API host); defaults to `https://boards-api.greenhouse.io/v1`.
+
+### Lever
 
 ```json
 {
+  "provider": "LEVER",
   "site": "<company_lever_slug>"
 }
 ```
@@ -179,7 +202,7 @@ Populate as adapters ship; validators can use **zod** per **`type`**.
 | F | Medium (depends on UX) |
 | G | Small–Medium |
 
-**Next actionable coding step:** **Phase A (`config` on `JobSource`) → Phase B (orchestration + normalization + persist) → Phase C.1 (Greenhouse adapter) → Phase D (admin sync)**.
+**Next actionable coding step:** **Phase D (admin sync trigger)** or expand **Phase C** (Ashby / USAJOBS / SmartRecruiters).
 
 ---
 

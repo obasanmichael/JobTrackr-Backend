@@ -9,7 +9,9 @@ describe('ResumeReviewQuotaService.resolveMonthlySuccessLimit', () => {
     expect(
       ResumeReviewQuotaService.resolveMonthlySuccessLimit('   '),
     ).toBeNull();
-    expect(ResumeReviewQuotaService.resolveMonthlySuccessLimit('-1')).toBeNull();
+    expect(
+      ResumeReviewQuotaService.resolveMonthlySuccessLimit('-1'),
+    ).toBeNull();
     expect(
       ResumeReviewQuotaService.resolveMonthlySuccessLimit('unlimited'),
     ).toBeNull();

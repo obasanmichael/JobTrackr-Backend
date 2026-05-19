@@ -18,7 +18,9 @@ export class JobListingDto {
   @ApiPropertyOptional({ enum: WorkMode })
   workMode!: WorkMode | null;
 
-  @ApiPropertyOptional({ description: 'Apply or job detail URL when available' })
+  @ApiPropertyOptional({
+    description: 'Apply or job detail URL when available',
+  })
   applyUrl!: string | null;
 
   @ApiPropertyOptional()
@@ -35,7 +37,9 @@ export class JobListingDto {
   })
   source!: string | null;
 
-  @ApiPropertyOptional({ description: 'When the posting was scraped or advertised' })
+  @ApiPropertyOptional({
+    description: 'When the posting was scraped or advertised',
+  })
   postedAt!: string | null;
 
   /** Optional opaque payload for debugging or future UX */

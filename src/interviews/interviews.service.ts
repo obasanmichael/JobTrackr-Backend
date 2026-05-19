@@ -46,7 +46,9 @@ export class InterviewsService {
     return interviews.map((interview) => this.toResponse(interview));
   }
 
-  async findUpcoming(currentUser: CurrentUser): Promise<InterviewResponseDto[]> {
+  async findUpcoming(
+    currentUser: CurrentUser,
+  ): Promise<InterviewResponseDto[]> {
     const interviews = await this.prismaService.interview.findMany({
       where: {
         userId: currentUser.userId,
@@ -65,9 +67,15 @@ export class InterviewsService {
     id: string,
     payload: UpdateInterviewDto,
   ): Promise<InterviewResponseDto> {
-    const existing = await this.getOwnedInterviewOrThrow(currentUser.userId, id);
+    const existing = await this.getOwnedInterviewOrThrow(
+      currentUser.userId,
+      id,
+    );
 
-    if (payload.applicationId && payload.applicationId !== existing.applicationId) {
+    if (
+      payload.applicationId &&
+      payload.applicationId !== existing.applicationId
+    ) {
       await this.ensureApplicationOwnership(
         currentUser.userId,
         payload.applicationId,

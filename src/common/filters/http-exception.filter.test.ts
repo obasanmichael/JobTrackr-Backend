@@ -1,4 +1,8 @@
-import { ArgumentsHost, BadRequestException, UnauthorizedException } from '@nestjs/common';
+import {
+  ArgumentsHost,
+  BadRequestException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { HttpExceptionFilter } from './http-exception.filter';
 
 describe('HttpExceptionFilter', () => {
@@ -23,7 +27,10 @@ describe('HttpExceptionFilter', () => {
     const { host, response } = buildHost();
 
     filter.catch(
-      new BadRequestException(['email must be an email', 'password is required']),
+      new BadRequestException([
+        'email must be an email',
+        'password is required',
+      ]),
       host,
     );
 

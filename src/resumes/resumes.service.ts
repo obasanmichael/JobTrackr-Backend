@@ -41,7 +41,10 @@ export class ResumesService {
     return resumes.map((resume) => ResumesService.toDto(resume));
   }
 
-  async findOne(user: CurrentUser, resumeId: string): Promise<ResumeResponseDto> {
+  async findOne(
+    user: CurrentUser,
+    resumeId: string,
+  ): Promise<ResumeResponseDto> {
     const resume = await this.prisma.resume.findFirst({
       where: { id: resumeId, userId: user.userId },
     });
@@ -63,22 +66,14 @@ export class ResumesService {
       throw new NotFoundException('Resume not found');
     }
 
-    if (
-      dto.status === ResumeParseStatus.ARCHIVED &&
-      dto.isActive === true
-    ) {
+    if (dto.status === ResumeParseStatus.ARCHIVED && dto.isActive === true) {
       throw new BadRequestException(
         'Cannot archive and activate the same resume in one request',
       );
     }
 
-    if (
-      dto.isActive === true &&
-      resume.status === ResumeParseStatus.ARCHIVED
-    ) {
-      throw new BadRequestException(
-        'Archived resumes cannot be marked active',
-      );
+    if (dto.isActive === true && resume.status === ResumeParseStatus.ARCHIVED) {
+      throw new BadRequestException('Archived resumes cannot be marked active');
     }
 
     if (dto.status === ResumeParseStatus.ARCHIVED) {
@@ -123,9 +118,7 @@ export class ResumesService {
     }
 
     if (resume.status === ResumeParseStatus.ARCHIVED) {
-      throw new BadRequestException(
-        'Archived resumes cannot be marked active',
-      );
+      throw new BadRequestException('Archived resumes cannot be marked active');
     }
 
     await this.prisma.$transaction([
@@ -381,7 +374,9 @@ export class ResumesService {
       await this.candidateProfiles.syncFromHeuristicParse(parsedResume);
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : 'Could not extract resume text';
+        error instanceof Error
+          ? error.message
+          : 'Could not extract resume text';
       await this.prisma.resume.update({
         where: { id: resumeId },
         data: {
@@ -447,7 +442,7 @@ export class ResumesService {
     ) {
       return null;
     }
-    return value as Record<string, unknown>;
+    return value;
   }
 
   private static jsonField(

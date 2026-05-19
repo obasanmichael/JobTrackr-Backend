@@ -83,7 +83,10 @@ export function extractCandidateProfileDraft(
 
   const summaryBlock =
     summaryFromSections(sections) ??
-    preamble.split(/\n\s*\n/)[0]?.trim()?.slice(0, 1200) ??
+    preamble
+      .split(/\n\s*\n/)[0]
+      ?.trim()
+      ?.slice(0, 1200) ??
     null;
 
   const skillsSection =
@@ -211,9 +214,7 @@ function matchSectionHeader(line: string): string | null {
   return null;
 }
 
-function summaryFromSections(
-  sections: Map<string, string[]>,
-): string | null {
+function summaryFromSections(sections: Map<string, string[]>): string | null {
   const lines = sections.get('summary');
   if (!lines?.length) {
     return null;
@@ -302,7 +303,10 @@ function firstHeadlineCandidate(
   fullText: string,
   summary: string | null,
 ): string | null {
-  const lines = fullText.split('\n').map((l) => l.trim()).filter(Boolean);
+  const lines = fullText
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean);
   for (const line of lines) {
     if (line.length > 140 || line.includes('@')) {
       continue;

@@ -79,8 +79,12 @@ describe('Application Events (e2e)', () => {
   });
 
   it('supports manual create/list/delete event for owner only', async () => {
-    const owner = await registerUser(`timeline-owner-${Date.now()}@example.com`);
-    const otherUser = await registerUser(`timeline-other-${Date.now()}@example.com`);
+    const owner = await registerUser(
+      `timeline-owner-${Date.now()}@example.com`,
+    );
+    const otherUser = await registerUser(
+      `timeline-other-${Date.now()}@example.com`,
+    );
 
     const applicationId = await createApplication(owner.accessToken);
 
@@ -122,7 +126,9 @@ describe('Application Events (e2e)', () => {
   });
 
   it('creates STATUS_CHANGE event on status transition', async () => {
-    const owner = await registerUser(`timeline-status-${Date.now()}@example.com`);
+    const owner = await registerUser(
+      `timeline-status-${Date.now()}@example.com`,
+    );
     const applicationId = await createApplication(owner.accessToken);
 
     await request(app.getHttpServer())
@@ -135,15 +141,9 @@ describe('Application Events (e2e)', () => {
       .get(`/api/v1/applications/${applicationId}/events`)
       .set(authHeader(owner.accessToken))
       .expect(200)
-      .expect(
-        ({
-          body,
-        }: {
-          body: Array<{ type: string; title: string }>;
-        }) => {
-          expect(body[0].type).toBe('STATUS_CHANGE');
-          expect(body[0].title).toBe('Status changed from Saved to Applied');
-        },
-      );
+      .expect(({ body }: { body: Array<{ type: string; title: string }> }) => {
+        expect(body[0].type).toBe('STATUS_CHANGE');
+        expect(body[0].title).toBe('Status changed from Saved to Applied');
+      });
   });
 });

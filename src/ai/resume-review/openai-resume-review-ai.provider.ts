@@ -39,7 +39,9 @@ Scores must be integers. Arrays may be empty only if truly nothing applies.`;
 export class OpenAiResumeReviewAiProvider implements ResumeReviewAiPort {
   constructor(private readonly configService: ConfigService) {}
 
-  async generateGeneralReview(input: ResumeReviewAiInput): Promise<ResumeReviewAiResult> {
+  async generateGeneralReview(
+    input: ResumeReviewAiInput,
+  ): Promise<ResumeReviewAiResult> {
     const userPrompt = this.buildGeneralUserPrompt(input);
     return this.completeStructured(userPrompt);
   }
@@ -57,13 +59,17 @@ ${this.formatJobContext(job)}`;
   }
 
   private buildGeneralUserPrompt(input: ResumeReviewAiInput): string {
-    const lines: string[] = ['Review this resume text and produce the JSON schema described.'];
+    const lines: string[] = [
+      'Review this resume text and produce the JSON schema described.',
+    ];
 
     if (input.candidateHeadline) {
       lines.push(`Candidate headline: ${input.candidateHeadline}`);
     }
     if (input.resumeSummary) {
-      lines.push(`Candidate summary (may overlap resume): ${input.resumeSummary}`);
+      lines.push(
+        `Candidate summary (may overlap resume): ${input.resumeSummary}`,
+      );
     }
 
     lines.push('');
@@ -93,7 +99,9 @@ ${this.formatJobContext(job)}`;
     return parts.join('\n');
   }
 
-  private async completeStructured(userPrompt: string): Promise<ResumeReviewAiResult> {
+  private async completeStructured(
+    userPrompt: string,
+  ): Promise<ResumeReviewAiResult> {
     const apiKey = this.configService.get<string>('OPENAI_API_KEY')?.trim();
     if (!apiKey) {
       throw new AiInvocationError(
@@ -151,8 +159,12 @@ ${this.formatJobContext(job)}`;
 
     if (!response.ok) {
       const msg =
-        parsedBody.error?.message ?? rawBody.slice(0, 500) ?? response.statusText;
-      throw new AiInvocationError(`OpenAI error HTTP ${response.status}: ${msg}`);
+        parsedBody.error?.message ??
+        rawBody.slice(0, 500) ??
+        response.statusText;
+      throw new AiInvocationError(
+        `OpenAI error HTTP ${response.status}: ${msg}`,
+      );
     }
 
     const content = parsedBody.choices?.[0]?.message?.content;

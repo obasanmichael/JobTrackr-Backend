@@ -69,13 +69,13 @@ function reviewRow(overrides: Partial<ResumeReview> = {}): ResumeReview {
     suggestions: [],
     improvedBullets: [],
     summary: 'ok',
-    rawAiOutput: { structured: VALID_AI.structured } as never,
+    rawAiOutput: { structured: VALID_AI.structured },
     status: ResumeReviewStatus.COMPLETED,
     errorMessage: null,
     createdAt: new Date('2026-05-01T00:00:00.000Z'),
     updatedAt: new Date('2026-05-01T00:00:00.000Z'),
     ...overrides,
-  } as ResumeReview;
+  };
 }
 
 const parsedResume = {
@@ -150,7 +150,7 @@ describe('ResumeReviewsService', () => {
     service = new ResumeReviewsService(
       prisma as unknown as PrismaService,
       quota as unknown as ResumeReviewQuotaService,
-      ai as unknown as ResumeReviewAiPort,
+      ai,
     );
   });
 

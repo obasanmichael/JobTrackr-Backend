@@ -72,7 +72,9 @@ export class JobSourcesService {
   }
 
   /** Maps PATCH body fields to Prisma update; clears JSON when config is explicitly null. */
-  private static buildUpdateData(dto: UpdateJobSourceAdminDto): Prisma.JobSourceUpdateInput {
+  private static buildUpdateData(
+    dto: UpdateJobSourceAdminDto,
+  ): Prisma.JobSourceUpdateInput {
     const data: Prisma.JobSourceUpdateInput = {};
     if (dto.name !== undefined) {
       data.name = dto.name;
@@ -106,8 +108,7 @@ export class JobSourcesService {
       baseUrl: row.baseUrl,
       isActive: row.isActive,
       requiresApiKey: row.requiresApiKey,
-      config:
-        JobSourcesService.adminConfigFromRow(row.config),
+      config: JobSourcesService.adminConfigFromRow(row.config),
       lastSyncAt: row.lastSyncAt,
       lastSuccessAt: row.lastSuccessAt,
       lastErrorAt: row.lastErrorAt,
@@ -117,12 +118,10 @@ export class JobSourcesService {
     };
   }
 
-  private static adminConfigFromRow(value: unknown): Record<string, unknown> | null {
-    if (
-      typeof value !== 'object' ||
-      value === null ||
-      Array.isArray(value)
-    ) {
+  private static adminConfigFromRow(
+    value: unknown,
+  ): Record<string, unknown> | null {
+    if (typeof value !== 'object' || value === null || Array.isArray(value)) {
       return null;
     }
     return value as Record<string, unknown>;

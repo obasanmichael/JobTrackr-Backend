@@ -1,5 +1,10 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { JobSearchQueryDto } from './dto/job-search-query.dto';
 import { JobSearchResponseDto } from './dto/job-search-response.dto';
@@ -15,7 +20,8 @@ export class JobsController {
    */
   @Get()
   @ApiOperation({
-    summary: 'Search aggregated job postings (pagination contract; listings TBD)',
+    summary:
+      'Search aggregated job postings (pagination contract; listings TBD)',
   })
   @ApiOkResponse({ type: JobSearchResponseDto })
   search(@Query() query: JobSearchQueryDto): JobSearchResponseDto {

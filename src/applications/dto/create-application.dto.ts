@@ -14,7 +14,11 @@ import {
   ValidatorConstraintInterface,
   ValidationArguments,
 } from 'class-validator';
-import { ApplicationSource, ApplicationStatus, WorkMode } from './application.enums';
+import {
+  ApplicationSource,
+  ApplicationStatus,
+  WorkMode,
+} from './application.enums';
 import { Transform, Type } from 'class-transformer';
 
 @ValidatorConstraint({ name: 'SalaryRange', async: false })

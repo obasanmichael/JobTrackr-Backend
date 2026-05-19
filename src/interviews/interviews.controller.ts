@@ -56,7 +56,9 @@ export class InterviewsController {
   }
 
   @Get('upcoming')
-  @ApiOperation({ summary: 'List upcoming interviews ordered by scheduled date' })
+  @ApiOperation({
+    summary: 'List upcoming interviews ordered by scheduled date',
+  })
   @ApiOkResponse({ type: InterviewResponseDto, isArray: true })
   findUpcoming(
     @CurrentUserDecorator() currentUser: CurrentUser,

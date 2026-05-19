@@ -46,7 +46,9 @@ export class AdminJobSourcesController {
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update a job source (partial; null config clears)' })
+  @ApiOperation({
+    summary: 'Update a job source (partial; null config clears)',
+  })
   @ApiOkResponse({ type: JobSourceAdminResponseDto })
   update(
     @Param('id', ParseUUIDPipe) id: string,

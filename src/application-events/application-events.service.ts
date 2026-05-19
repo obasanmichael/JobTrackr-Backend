@@ -70,7 +70,10 @@ export class ApplicationEventsService {
     }
   }
 
-  private async ensureEventOwnership(userId: string, eventId: string): Promise<void> {
+  private async ensureEventOwnership(
+    userId: string,
+    eventId: string,
+  ): Promise<void> {
     const event = await this.prismaService.applicationEvent.findFirst({
       where: {
         id: eventId,

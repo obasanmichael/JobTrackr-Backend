@@ -1,6 +1,14 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
-import { IsDate, IsEnum, IsOptional, IsString, IsUrl, IsUUID, MaxLength } from 'class-validator';
+import {
+  IsDate,
+  IsEnum,
+  IsOptional,
+  IsString,
+  IsUrl,
+  IsUUID,
+  MaxLength,
+} from 'class-validator';
 import { InterviewStage, InterviewType } from './interview.enums';
 
 export class CreateInterviewDto {

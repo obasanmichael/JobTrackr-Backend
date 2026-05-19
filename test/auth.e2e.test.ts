@@ -110,7 +110,9 @@ describe('Auth (e2e)', () => {
         }) => {
           expect(body.statusCode).toBe(409);
           expect(body.error).toBe('Conflict');
-          expect(body.message).toBe('An account with this email already exists.');
+          expect(body.message).toBe(
+            'An account with this email already exists.',
+          );
           expect(body.path).toBe('/api/v1/auth/register');
           expect(new Date(body.timestamp).toString()).not.toBe('Invalid Date');
         },
@@ -135,10 +137,12 @@ describe('Auth (e2e)', () => {
         password: 'StrongPassword123',
       })
       .expect(201)
-      .expect(({ body }: { body: { accessToken: string; user: { id: string } } }) => {
-        expect(body.user.id).toBe(registerResponse.body.user.id as string);
-        expect(body.accessToken).toBeTruthy();
-      });
+      .expect(
+        ({ body }: { body: { accessToken: string; user: { id: string } } }) => {
+          expect(body.user.id).toBe(registerResponse.body.user.id as string);
+          expect(body.accessToken).toBeTruthy();
+        },
+      );
   });
 
   it('login fails for wrong password with generic error', async () => {

@@ -31,7 +31,9 @@ import { ApplicationEventsService } from './application-events.service';
 @ApiTags('application-events')
 @ApiBearerAuth('access-token')
 export class ApplicationEventsController {
-  constructor(private readonly applicationEventsService: ApplicationEventsService) {}
+  constructor(
+    private readonly applicationEventsService: ApplicationEventsService,
+  ) {}
 
   @Post('applications/:id/events')
   @ApiOperation({ summary: 'Create an event for an application timeline' })

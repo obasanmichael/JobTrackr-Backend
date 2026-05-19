@@ -16,7 +16,9 @@ import { RESUME_REVIEW_AI_PORT } from './resume-review/resume-review-ai.tokens';
         mock: MockResumeReviewAiProvider,
         openai: OpenAiResumeReviewAiProvider,
       ): ResumeReviewAiPort => {
-        const mode = (config.get<string>('AI_PROVIDER') ?? 'mock').toLowerCase();
+        const mode = (
+          config.get<string>('AI_PROVIDER') ?? 'mock'
+        ).toLowerCase();
         return mode === 'openai' ? openai : mock;
       },
       inject: [

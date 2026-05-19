@@ -27,71 +27,77 @@ export class DashboardService {
     'FINAL_INTERVIEW',
   ]);
 
-  async getSummary(currentUser: CurrentUser): Promise<DashboardSummaryResponseDto> {
+  async getSummary(
+    currentUser: CurrentUser,
+  ): Promise<DashboardSummaryResponseDto> {
     const now = new Date();
 
-    const [totalApplications, groupedByStatus, upcomingReminders, upcomingInterviews, recentEvents] =
-      await Promise.all([
-        this.prismaService.jobApplication.count({
-          where: { userId: currentUser.userId },
-        }),
-        this.prismaService.jobApplication.groupBy({
-          by: ['status'],
-          where: { userId: currentUser.userId },
-          _count: { _all: true },
-        }),
-        this.prismaService.reminder.findMany({
-          where: {
-            userId: currentUser.userId,
-            isCompleted: false,
-            dueDate: { gte: now },
-          },
-          orderBy: [{ dueDate: 'asc' }, { id: 'asc' }],
-          take: 5,
-          select: {
-            id: true,
-            applicationId: true,
-            title: true,
-            dueDate: true,
-          },
-        }),
-        this.prismaService.interview.findMany({
-          where: {
-            userId: currentUser.userId,
-            scheduledAt: { gte: now },
-          },
-          orderBy: [{ scheduledAt: 'asc' }, { id: 'asc' }],
-          take: 5,
-          select: {
-            id: true,
-            applicationId: true,
-            stage: true,
-            interviewType: true,
-            scheduledAt: true,
-          },
-        }),
-        this.prismaService.applicationEvent.findMany({
-          where: { userId: currentUser.userId },
-          orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-          take: 10,
-          select: {
-            id: true,
-            applicationId: true,
-            type: true,
-            title: true,
-            description: true,
-            createdAt: true,
-          },
-        }),
-      ]);
+    const [
+      totalApplications,
+      groupedByStatus,
+      upcomingReminders,
+      upcomingInterviews,
+      recentEvents,
+    ] = await Promise.all([
+      this.prismaService.jobApplication.count({
+        where: { userId: currentUser.userId },
+      }),
+      this.prismaService.jobApplication.groupBy({
+        by: ['status'],
+        where: { userId: currentUser.userId },
+        _count: { _all: true },
+      }),
+      this.prismaService.reminder.findMany({
+        where: {
+          userId: currentUser.userId,
+          isCompleted: false,
+          dueDate: { gte: now },
+        },
+        orderBy: [{ dueDate: 'asc' }, { id: 'asc' }],
+        take: 5,
+        select: {
+          id: true,
+          applicationId: true,
+          title: true,
+          dueDate: true,
+        },
+      }),
+      this.prismaService.interview.findMany({
+        where: {
+          userId: currentUser.userId,
+          scheduledAt: { gte: now },
+        },
+        orderBy: [{ scheduledAt: 'asc' }, { id: 'asc' }],
+        take: 5,
+        select: {
+          id: true,
+          applicationId: true,
+          stage: true,
+          interviewType: true,
+          scheduledAt: true,
+        },
+      }),
+      this.prismaService.applicationEvent.findMany({
+        where: { userId: currentUser.userId },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        take: 10,
+        select: {
+          id: true,
+          applicationId: true,
+          type: true,
+          title: true,
+          description: true,
+          createdAt: true,
+        },
+      }),
+    ]);
 
-    const applicationsByStatus = this.applicationStatuses.reduce<Record<string, number>>(
-      (acc, status) => {
-        acc[status] = 0;
-        return acc;
-      },
-      {},
-    );
+    const applicationsByStatus = this.applicationStatuses.reduce<
+      Record<string, number>
+    >((acc, status) => {
+      acc[status] = 0;
+      return acc;
+    }, {});
 
     for (const group of groupedByStatus) {
       applicationsByStatus[group.status] = group._count._all;

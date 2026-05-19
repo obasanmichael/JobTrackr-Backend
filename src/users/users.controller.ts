@@ -23,7 +23,9 @@ export class UsersController {
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiOkResponse({ type: UserProfileDto })
   @ApiUnauthorizedResponse({ description: 'Missing or invalid token.' })
-  me(@CurrentUserDecorator() currentUser: CurrentUser): Promise<UserProfileDto> {
+  me(
+    @CurrentUserDecorator() currentUser: CurrentUser,
+  ): Promise<UserProfileDto> {
     return this.usersService.getCurrentUserProfile(currentUser);
   }
 }

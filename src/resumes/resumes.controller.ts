@@ -58,7 +58,9 @@ export class ResumesController {
 
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
-  @ApiOperation({ summary: 'Upload a resume (PDF or DOCX), store, and parse text' })
+  @ApiOperation({
+    summary: 'Upload a resume (PDF or DOCX), store, and parse text',
+  })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -117,7 +119,9 @@ export class ResumesController {
   }
 
   @Patch(':id/profile')
-  @ApiOperation({ summary: 'Update candidate profile extracted from this resume' })
+  @ApiOperation({
+    summary: 'Update candidate profile extracted from this resume',
+  })
   @ApiOkResponse({ type: CandidateProfileResponseDto })
   updateProfile(
     @CurrentUserDecorator() currentUser: CurrentUser,

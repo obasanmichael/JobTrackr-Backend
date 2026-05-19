@@ -72,7 +72,10 @@ describe('ApplicationEventsService', () => {
     prismaService.applicationEvent.findFirst.mockResolvedValue(null);
 
     await expect(
-      service.removeById({ userId: 'user-2', email: 'user2@example.com' }, 'event-1'),
+      service.removeById(
+        { userId: 'user-2', email: 'user2@example.com' },
+        'event-1',
+      ),
     ).rejects.toThrow(NotFoundException);
   });
 });

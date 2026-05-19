@@ -91,7 +91,11 @@ describe('Reminders + Interviews (e2e)', () => {
     const reminderB = await request(app.getHttpServer())
       .post('/api/v1/reminders')
       .set(authHeader(owner.accessToken))
-      .send({ applicationId: appId, title: 'Later reminder', dueDate: dueLater })
+      .send({
+        applicationId: appId,
+        title: 'Later reminder',
+        dueDate: dueLater,
+      })
       .expect(201);
 
     await request(app.getHttpServer())

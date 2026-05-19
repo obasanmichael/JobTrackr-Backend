@@ -73,10 +73,7 @@ describe('InterviewsService', () => {
     prismaService.interview.findFirst.mockResolvedValue(null);
 
     await expect(
-      service.remove(
-        { userId: 'user-2', email: 'user2@example.com' },
-        'int-1',
-      ),
+      service.remove({ userId: 'user-2', email: 'user2@example.com' }, 'int-1'),
     ).rejects.toThrow(NotFoundException);
   });
 

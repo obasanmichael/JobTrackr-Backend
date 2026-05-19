@@ -1,7 +1,4 @@
-import {
-  BadRequestException,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { JobSourceType } from '@prisma/client';
 import type { JobSource } from '@prisma/client';
 import type { PrismaService } from '../prisma/prisma.service';
@@ -80,7 +77,7 @@ describe('JobSourcesService', () => {
       lastErrorMessage: null,
       createdAt: new Date(),
       updatedAt: new Date(),
-    } as JobSource);
+    });
 
     await service.createForAdmin({
       name: 'Demo Greenhouse',
@@ -115,7 +112,7 @@ describe('JobSourcesService', () => {
       type: JobSourceType.MANUAL,
       ...baseRow,
       isActive: true,
-    } as JobSource);
+    });
 
     await expect(
       service.updateForAdmin('00000000-0000-0000-9000-000000000002', {}),

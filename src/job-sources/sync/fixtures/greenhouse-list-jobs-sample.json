@@ -1,0 +1,14 @@
+{
+  "jobs": [
+    {
+      "id": 7776598,
+      "title": "Accountant ",
+      "absolute_url": "https://example.com/careers/7776598?gh_jid=7776598",
+      "company_name": "Example Corp",
+      "location": { "name": "Bengaluru, India" },
+      "first_published": "2026-04-15T01:00:08-04:00",
+      "updated_at": "2026-05-08T13:03:25-04:00"
+    }
+  ],
+  "meta": { "total": 1 }
+}

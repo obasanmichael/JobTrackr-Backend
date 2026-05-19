@@ -22,7 +22,9 @@ describe('resumeReviewStructuredOutputSchema', () => {
     };
 
     expect(() => validateStructuredResumeReviewOutput(raw)).not.toThrow();
-    expect(resumeReviewStructuredOutputSchema.safeParse(raw).success).toBe(true);
+    expect(resumeReviewStructuredOutputSchema.safeParse(raw).success).toBe(
+      true,
+    );
   });
 
   it('rejects invalid score bounds', () => {
@@ -38,7 +40,8 @@ describe('resumeReviewStructuredOutputSchema', () => {
   });
 
   it('parses fenced JSON from model text', () => {
-    const text = 'Here:\n```json\n{"overallScore":50,"strengths":[],"weaknesses":[],"missingKeywords":[],"suggestions":[]}\n```';
+    const text =
+      'Here:\n```json\n{"overallScore":50,"strengths":[],"weaknesses":[],"missingKeywords":[],"suggestions":[]}\n```';
     const structured = validateStructuredResumeReviewOutput(
       extractJsonFromModelText(text),
     );

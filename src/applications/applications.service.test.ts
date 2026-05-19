@@ -99,7 +99,10 @@ describe('ApplicationsService', () => {
     prismaService.jobApplication.findFirst.mockResolvedValue(null);
 
     await expect(
-      service.findOne({ userId: 'user-2', email: 'user2@example.com' }, 'app-1'),
+      service.findOne(
+        { userId: 'user-2', email: 'user2@example.com' },
+        'app-1',
+      ),
     ).rejects.toThrow(NotFoundException);
   });
 

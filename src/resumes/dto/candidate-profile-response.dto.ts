@@ -11,7 +11,10 @@ export class CandidateProfileResponseDto {
   headline!: string | null;
   @ApiPropertyOptional()
   summary!: string | null;
-  @ApiPropertyOptional({ type: 'array', description: 'Structured JSON from parser / user edits' })
+  @ApiPropertyOptional({
+    type: 'array',
+    description: 'Structured JSON from parser / user edits',
+  })
   skills!: unknown[] | Record<string, unknown> | null;
   @ApiPropertyOptional()
   tools!: unknown[] | Record<string, unknown> | null;
@@ -35,7 +38,9 @@ export class CandidateProfileResponseDto {
   experience!: unknown[] | Record<string, unknown> | null;
   @ApiPropertyOptional({ description: 'e.g. heuristic:v1 or future llm:v1' })
   extractionPipeline!: string | null;
-  @ApiPropertyOptional({ description: 'Opaque extraction diagnostics / segments' })
+  @ApiPropertyOptional({
+    description: 'Opaque extraction diagnostics / segments',
+  })
   rawExtractedData!: Record<string, unknown> | null;
   @ApiProperty()
   isConfirmed!: boolean;
