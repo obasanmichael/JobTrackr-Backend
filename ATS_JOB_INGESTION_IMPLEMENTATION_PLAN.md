@@ -255,6 +255,15 @@ For **job search** and **job matching** specifically:
 | **E.5** | E2e tests: empty DB, seeded jobs, filter combinations, pagination boundaries. |
 | **E.6** | **FE (mobile + web):** map new query params; “Apply on company site” uses `applicationUrl`; optional pagination UI. |
 
+### Phase E completion (implemented)
+
+- [x] **E.1** — **`JobsService.search()`** + **`buildJobSearchWhere`** (`job-search.filters.ts`): `q`, `location`, `workMode`→`remoteType`, `experienceLevel`, `salaryMin`, `source`, `postedWithin` (7/30/90).
+- [x] **E.2** — Paginated `{ jobs, total, page, limit }`; `limit` capped at **50**.
+- [x] **E.3** — **`GET /api/v1/jobs/:id`** returns **`JobDetailDto`**; **404** when inactive/missing.
+- [x] **E.4** — List/detail DTOs expose `applyUrl`, `source`, `postedAt`, excerpt; omit `rawPayload` / `sourceId`.
+- [x] **E.5** — Unit tests + **`test/jobs.e2e.test.ts`**.
+- [ ] **E.6** — FE optional filters/pagination UX (mobile/web already consume base contract).
+
 **Exit:** User can keyword search, filter, paginate, open employer apply link from listing and detail.
 
 ---
@@ -408,7 +417,7 @@ Routing today:
 | C.1–C.2 Greenhouse + Lever | Done | Medium |
 | C.3–C.5 Ashby / USAJOBS / SmartRecruiters | Not started | Medium each |
 | D — Admin sync trigger | Done | Small |
-| E — Job Search API + FE | Not started (stub controller) | Medium |
+| E — Job Search API + FE | Done (API); FE filters optional | Medium |
 | G — Dedupe + stale | Done | Small–Medium |
 | H — Launch employer seed + ops | Done | Small (+ expand list over time) |
 | M — Matched Jobs MVP | Not started | Medium |
@@ -416,7 +425,7 @@ Routing today:
 | J — Trust / quality jobs | Not started | Small |
 | K — Scale | Ongoing | Large |
 
-**Next actionable coding step:** **E** (real `GET /jobs`) → **M**.
+**Next actionable coding step:** **M** (Matched Jobs MVP).
 
 ---
 
