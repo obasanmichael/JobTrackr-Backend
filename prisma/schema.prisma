@@ -27,6 +27,7 @@ model User {
   jobMatchResults   JobMatchResult[]
   jobSourceSubmissions JobSourceSubmission[]
   savedJobs         SavedJob[]
+  matchAlertPreference MatchAlertPreference?
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 }
@@ -438,6 +439,30 @@ model JobMatchResult {
   @@unique([userId, externalJobId])
   @@index([userId, overallScore])
   @@index([candidateProfileId])
+}
+
+/// Per-user thresholds and channels for match alerts (V2E); delivery worker not included here.
+model MatchAlertPreference {
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Master switch for match notifications (email/push/digest — see channels).
+  enabled Boolean @default(false)
+
+  /// Minimum JobMatchResult.overallScore (0–100) to include in alerts.
+  minMatchScore Int @default(70)
+
+  /// Per-channel opt-in, e.g. `{ "email": true, "push": false }`.
+  channels Json?
+
+  /// Last successful notification send (dedupe / digest anchor).
+  lastNotifiedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("match_alert_preferences")
 }
 
 enum JobSourceSubmissionStatus {

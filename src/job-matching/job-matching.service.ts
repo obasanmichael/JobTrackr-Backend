@@ -1,6 +1,7 @@
 import {
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import type {
@@ -34,6 +35,8 @@ import {
 
 @Injectable()
 export class JobMatchingService {
+  private readonly logger = new Logger(JobMatchingService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   async listMatches(
@@ -156,6 +159,10 @@ export class JobMatchingService {
       orderBy: [{ postedAt: 'desc' }, { updatedAt: 'desc' }],
       take: MATCH_JOB_POOL_SIZE,
     });
+
+    this.logger.log(
+      `Regenerating matches for user=${userId} poolSize=${jobs.length} resultLimit=${MATCH_RESULT_LIMIT}`,
+    );
 
     const scored = jobs
       .map((job) => this.scoreExternalJob(profile, job))
