@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { WorkMode } from '@prisma/client';
+import { JobListingSourceDto } from './job-listing-source.dto';
 
 /** Normalized external listing — populated when aggregation is wired */
 export class JobListingDto {
@@ -33,9 +34,15 @@ export class JobListingDto {
   currency!: string | null;
 
   @ApiPropertyOptional({
-    description: 'Source label (Indeed, LinkedIn, etc.) when available',
+    description: 'Ingestion source display name (alias of sourceMeta.name)',
   })
   source!: string | null;
+
+  @ApiPropertyOptional({
+    type: JobListingSourceDto,
+    description: 'Ingestion source metadata (name + type); raw provider payloads are never exposed',
+  })
+  sourceMeta!: JobListingSourceDto | null;
 
   @ApiPropertyOptional({
     description: 'When the posting was scraped or advertised',

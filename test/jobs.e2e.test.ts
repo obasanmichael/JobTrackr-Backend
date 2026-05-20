@@ -124,6 +124,10 @@ describe('Jobs (e2e)', () => {
       'https://jobs.example/acme/100',
     );
     expect(searchResponse.body.jobs[0].source).toBe('Demo Greenhouse');
+    expect(searchResponse.body.jobs[0].sourceMeta).toEqual({
+      name: 'Demo Greenhouse',
+      type: JobSourceType.ATS_FEED,
+    });
   });
 
   it('returns job detail for active listing and 404 for inactive', async () => {
@@ -171,6 +175,10 @@ describe('Jobs (e2e)', () => {
 
     expect(detailResponse.body.title).toBe('Product Manager');
     expect(detailResponse.body.description).toBe('Own the roadmap.');
+    expect(detailResponse.body.sourceMeta).toEqual({
+      name: 'Lever Demo',
+      type: JobSourceType.ATS_FEED,
+    });
 
     await request(app.getHttpServer())
       .get(`/api/v1/jobs/${inactiveJob.id}`)

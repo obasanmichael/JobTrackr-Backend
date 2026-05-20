@@ -3,6 +3,7 @@ import {
   ExternalExperienceLevel,
   ExternalJobEmploymentType,
   ExternalJobRemoteType,
+  JobSourceType,
   WorkMode,
 } from '@prisma/client';
 import type { ExternalJob } from '@prisma/client';
@@ -65,7 +66,12 @@ describe('JobsService', () => {
 
   it('returns paginated search results', async () => {
     prisma.externalJob.count.mockResolvedValueOnce(1);
-    prisma.externalJob.findMany.mockResolvedValueOnce([jobRow]);
+    prisma.externalJob.findMany.mockResolvedValueOnce([
+      {
+        ...jobRow,
+        source: { name: 'Stripe', type: JobSourceType.ATS_FEED },
+      },
+    ]);
 
     const result = await service.search({ q: 'engineer', page: 1, limit: 20 });
 
@@ -80,11 +86,20 @@ describe('JobsService', () => {
         workMode: WorkMode.REMOTE,
         applyUrl: 'https://jobs.example/stripe/1',
         source: 'Stripe',
+        sourceMeta: {
+          name: 'Stripe',
+          type: JobSourceType.ATS_FEED,
+        },
       }),
     );
     expect(prisma.externalJob.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({ isActive: true, isSuspicious: false }),
+        include: expect.objectContaining({
+          source: expect.objectContaining({
+            select: { name: true, type: true },
+          }),
+        }),
         skip: 0,
         take: 20,
       }),
@@ -92,13 +107,20 @@ describe('JobsService', () => {
   });
 
   it('returns job detail for active listing', async () => {
-    prisma.externalJob.findFirst.mockResolvedValueOnce(jobRow);
+    prisma.externalJob.findFirst.mockResolvedValueOnce({
+      ...jobRow,
+      source: { name: 'Stripe', type: JobSourceType.ATS_FEED },
+    });
 
     const detail = await service.findActiveById(jobRow.id);
 
     expect(detail.description).toBe('Build payments infrastructure.');
     expect(detail.experienceLevel).toBe(ExternalExperienceLevel.SENIOR);
     expect(detail.employmentType).toBe(ExternalJobEmploymentType.FULL_TIME);
+    expect(detail.sourceMeta).toEqual({
+      name: 'Stripe',
+      type: JobSourceType.ATS_FEED,
+    });
   });
 
   it('throws NotFound when job is missing or inactive', async () => {

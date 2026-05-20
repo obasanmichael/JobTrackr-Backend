@@ -10,7 +10,11 @@ import type {
 } from '@prisma/client';
 import { Prisma } from '@prisma/client';
 import type { CurrentUser } from '../common/types/current-user.type';
-import { mapExternalJobToListingDto } from '../jobs/external-job.mapper';
+import {
+  mapExternalJobToListingDto,
+  type ExternalJobListingRow,
+} from '../jobs/external-job.mapper';
+import { externalJobPublicInclude } from '../jobs/external-job-public.select';
 import { PrismaService } from '../prisma/prisma.service';
 import type {
   JobMatchItemDto,
@@ -74,6 +78,7 @@ export class JobMatchingService {
     const profile = await this.resolveProfileForUser(user.userId);
     const job = await this.prisma.externalJob.findFirst({
       where: { id: externalJobId, isActive: true, isSuspicious: false },
+      include: externalJobPublicInclude,
     });
     if (!job) {
       throw new NotFoundException('Job not found');
@@ -91,7 +96,7 @@ export class JobMatchingService {
         experienceScore: 0,
         locationScore: 0,
         recencyScore: 0,
-        job: mapExternalJobToListingDto(job),
+        job: mapExternalJobToListingDto(job as ExternalJobListingRow),
       };
     }
 
@@ -110,7 +115,7 @@ export class JobMatchingService {
   ): Promise<JobMatchListResponseDto | null> {
     const rows = await this.prisma.jobMatchResult.findMany({
       where: { userId },
-      include: { externalJob: true },
+      include: { externalJob: { include: externalJobPublicInclude } },
       orderBy: [{ overallScore: 'desc' }, { updatedAt: 'desc' }],
       take: MATCH_RESULT_LIMIT,
     });
@@ -147,6 +152,7 @@ export class JobMatchingService {
   ): Promise<JobMatchListResponseDto> {
     const jobs = await this.prisma.externalJob.findMany({
       where: { isActive: true, isSuspicious: false },
+      include: externalJobPublicInclude,
       orderBy: [{ postedAt: 'desc' }, { updatedAt: 'desc' }],
       take: MATCH_JOB_POOL_SIZE,
     });
@@ -168,7 +174,7 @@ export class JobMatchingService {
 
   private scoreExternalJob(
     profile: CandidateProfile,
-    job: ExternalJob,
+    job: ExternalJobListingRow,
   ): JobMatchItemDto {
     const breakdown = scoreJobMatch(
       profileInputFromRecord(profile),
@@ -236,7 +242,7 @@ export class JobMatchingService {
 
   private toMatchItemDto(
     row: JobMatchResult,
-    job: ExternalJob,
+    job: ExternalJobListingRow,
   ): JobMatchItemDto {
     return {
       overallScore: row.overallScore,
