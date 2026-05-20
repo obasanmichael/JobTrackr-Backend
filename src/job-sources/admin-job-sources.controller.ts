@@ -2,6 +2,8 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -9,8 +11,10 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import {
+  ApiBadGatewayResponse,
   ApiBearerAuth,
   ApiCreatedResponse,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
@@ -19,7 +23,9 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdminGuard } from '../common/guards/admin.guard';
 import { CreateJobSourceAdminDto } from './dto/create-job-source-admin.dto';
 import { JobSourceAdminResponseDto } from './dto/job-source-admin-response.dto';
+import { JobSourceSyncResponseDto } from './dto/job-source-sync-response.dto';
 import { UpdateJobSourceAdminDto } from './dto/update-job-source-admin.dto';
+import { JobIngestOrchestrationService } from './job-ingest-orchestration.service';
 import { JobSourcesService } from './job-sources.service';
 
 @ApiTags('admin-job-sources')
@@ -27,7 +33,10 @@ import { JobSourcesService } from './job-sources.service';
 @UseGuards(JwtAuthGuard, AdminGuard)
 @ApiBearerAuth('access-token')
 export class AdminJobSourcesController {
-  constructor(private readonly jobSourcesService: JobSourcesService) {}
+  constructor(
+    private readonly jobSourcesService: JobSourcesService,
+    private readonly jobIngestOrchestrationService: JobIngestOrchestrationService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'List external job ingestion sources (admin)' })
@@ -55,5 +64,31 @@ export class AdminJobSourcesController {
     @Body() dto: UpdateJobSourceAdminDto,
   ): Promise<JobSourceAdminResponseDto> {
     return this.jobSourcesService.updateForAdmin(id, dto);
+  }
+
+  @Post(':id/sync')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary:
+      'Run ingest sync for one job source (synchronous; fetches ATS snapshot and upserts external jobs)',
+  })
+  @ApiOkResponse({ type: JobSourceSyncResponseDto })
+  @ApiNotFoundResponse({ description: 'Job source not found' })
+  @ApiBadGatewayResponse({
+    description:
+      'ATS fetch or persist failed; source lastError* fields are updated',
+  })
+  async sync(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<JobSourceSyncResponseDto> {
+    const result =
+      await this.jobIngestOrchestrationService.syncExternalJobs(id);
+
+    return {
+      jobSourceId: id,
+      upsertedCount: result.upsertedCount,
+      skippedInvalid: result.skippedInvalid,
+      syncedAt: result.syncedAt,
+    };
   }
 }

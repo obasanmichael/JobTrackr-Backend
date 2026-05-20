@@ -18,6 +18,8 @@ const MAX_HEALTH_MESSAGE = 3_900;
 export type JobIngestSyncResult = {
   upsertedCount: number;
   skippedInvalid: number;
+  /** Same timestamp written to JobSource.lastSyncAt / lastSuccessAt on success. */
+  syncedAt: Date;
 };
 
 @Injectable()
@@ -106,7 +108,7 @@ export class JobIngestOrchestrationService {
         },
       });
 
-      return { upsertedCount, skippedInvalid };
+      return { upsertedCount, skippedInvalid, syncedAt };
     } catch (error) {
       const message = JobIngestOrchestrationService.truncateErrorMessage(error);
 

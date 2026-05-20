@@ -62,6 +62,7 @@ describe('JobIngestOrchestrationService', () => {
     await expect(service.syncExternalJobs(JOB_SOURCE_ROW.id)).resolves.toEqual({
       upsertedCount: 0,
       skippedInvalid: 0,
+      syncedAt: expect.any(Date),
     });
 
     expect(prisma.externalJob.upsert).not.toHaveBeenCalled();
@@ -97,7 +98,11 @@ describe('JobIngestOrchestrationService', () => {
 
     const result = await service.syncExternalJobs(JOB_SOURCE_ROW.id);
 
-    expect(result).toEqual({ upsertedCount: 2, skippedInvalid: 0 });
+    expect(result).toEqual({
+      upsertedCount: 2,
+      skippedInvalid: 0,
+      syncedAt: expect.any(Date),
+    });
     expect(prisma.externalJob.upsert).toHaveBeenCalledTimes(2);
     expect(prisma.$transaction).toHaveBeenCalled();
   });
@@ -120,6 +125,7 @@ describe('JobIngestOrchestrationService', () => {
     await expect(service.syncExternalJobs(JOB_SOURCE_ROW.id)).resolves.toEqual({
       upsertedCount: 1,
       skippedInvalid: 1,
+      syncedAt: expect.any(Date),
     });
 
     expect(prisma.externalJob.upsert).toHaveBeenCalledTimes(1);
