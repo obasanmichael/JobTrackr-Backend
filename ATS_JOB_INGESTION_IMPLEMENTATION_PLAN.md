@@ -339,6 +339,13 @@ missingSkills       # string[] (optional, top gaps only)
 
 **Exit:** Employers (or users) can suggest sources without manual discovery forever.
 
+### Phase I completion (implemented)
+
+- [x] **I.1** — **`POST /api/v1/job-source-submissions`** (public; optional auth links `submitterUserId`).
+- [x] **I.2** — **`parseAtsCareersUrl`** auto-detects Greenhouse, Lever, and Ashby slugs from careers URLs.
+- [x] **I.3** — Admin queue: **`GET /api/v1/admin/job-source-submissions`**, **`POST …/:id/approve`** creates/updates **`JobSource`** + first sync when ingest is supported.
+- [x] **I.4** — **`POST …/:id/reject`** and **`POST …/:id/spam`**; throttled public submit via **`JOB_SOURCE_SUBMISSIONS_THROTTLE_LIMIT`**; duplicate pending URL → **409**.
+
 ---
 
 ## Phase J — Trust & quality controls
@@ -432,11 +439,11 @@ Routing today:
 | G — Dedupe + stale | Done | Small–Medium |
 | H — Launch employer seed + ops | Done | Small (+ expand list over time) |
 | M — Matched Jobs MVP | Done (API + mobile) | Medium |
-| I — Careers page submissions | Not started | Medium |
+| I — Careers page submissions | Done | Medium |
 | J — Trust / quality jobs | Not started | Small |
 | K — Scale | Ongoing | Large |
 
-**Next actionable coding step:** **I** (careers page submissions) or **J** (trust / quality jobs).
+**Next actionable coding step:** **J** (trust / quality jobs).
 
 ---
 

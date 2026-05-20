@@ -25,6 +25,7 @@ model User {
   resumeReviews     ResumeReview[]
   usageCounters     UsageCounter[]
   jobMatchResults   JobMatchResult[]
+  jobSourceSubmissions JobSourceSubmission[]
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 }
@@ -299,6 +300,7 @@ model JobSource {
   /** Per-ATS opaque settings (board_token, Lever site slug, etc.) — Phase A ingest plan. */
   config           Json?
   externalJobs     ExternalJob[]
+  jobSourceSubmissions JobSourceSubmission[]
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
@@ -399,4 +401,34 @@ model JobMatchResult {
   @@unique([userId, externalJobId])
   @@index([userId, overallScore])
   @@index([candidateProfileId])
+}
+
+enum JobSourceSubmissionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SPAM
+}
+
+/// User-submitted careers page awaiting admin review (Phase I).
+model JobSourceSubmission {
+  id              String                    @id @default(uuid())
+  companyName     String
+  careersUrl      String
+  submitterEmail  String?
+  submitterUserId String?
+  submitterUser   User?                     @relation(fields: [submitterUserId], references: [id], onDelete: SetNull)
+  detectedAtsType String?
+  detectedSlug    String?
+  status          JobSourceSubmissionStatus @default(PENDING)
+  jobSourceId     String?
+  jobSource       JobSource?                @relation(fields: [jobSourceId], references: [id], onDelete: SetNull)
+  reviewerNotes   String?
+  submitterIp     String?
+  reviewedAt      DateTime?
+  createdAt       DateTime                  @default(now())
+  updatedAt       DateTime                  @updatedAt
+
+  @@index([status, createdAt])
+  @@index([careersUrl])
 }
