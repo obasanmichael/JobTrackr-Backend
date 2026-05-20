@@ -35,7 +35,10 @@ export class JobSourceSubmissionsService {
 
   async create(
     dto: CreateJobSourceSubmissionDto,
-    options?: { submitterUser?: CurrentUser | null; submitterIp?: string | null },
+    options?: {
+      submitterUser?: CurrentUser | null;
+      submitterIp?: string | null;
+    },
   ): Promise<JobSourceSubmissionResponseDto> {
     const careersUrl = normalizeCareersUrl(dto.careersUrl);
     const companyName = dto.companyName.trim();
@@ -190,7 +193,9 @@ export class JobSourceSubmissionsService {
     return submission;
   }
 
-  private static toDto(row: JobSourceSubmission): JobSourceSubmissionResponseDto {
+  private static toDto(
+    row: JobSourceSubmission,
+  ): JobSourceSubmissionResponseDto {
     return {
       id: row.id,
       companyName: row.companyName,

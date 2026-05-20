@@ -29,7 +29,10 @@ export class JobSourceSubmissionResponseDto {
   })
   detectedSlug!: string | null;
 
-  @ApiProperty({ enum: JobSourceSubmissionStatus, enumName: 'JobSourceSubmissionStatus' })
+  @ApiProperty({
+    enum: JobSourceSubmissionStatus,
+    enumName: 'JobSourceSubmissionStatus',
+  })
   status!: JobSourceSubmissionStatus;
 
   @ApiPropertyOptional({ nullable: true })

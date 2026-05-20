@@ -45,7 +45,8 @@ export class JobSearchQueryDto {
   experienceLevel?: ExternalExperienceLevel;
 
   @ApiPropertyOptional({
-    description: 'Minimum salary; matches when job salaryMin or salaryMax meets threshold',
+    description:
+      'Minimum salary; matches when job salaryMin or salaryMax meets threshold',
     minimum: 0,
   })
   @IsOptional()

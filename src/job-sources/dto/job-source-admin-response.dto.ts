@@ -40,6 +40,9 @@ export class JobSourceAdminResponseDto {
   @ApiPropertyOptional()
   lastErrorMessage!: string | null;
 
+  @ApiProperty()
+  consecutiveSyncFailures!: number;
+
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt!: Date;
 

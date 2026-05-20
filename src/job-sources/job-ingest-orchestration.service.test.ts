@@ -16,13 +16,18 @@ const JOB_SOURCE_ROW = {
   lastSuccessAt: null,
   lastErrorAt: null,
   lastErrorMessage: null,
+  consecutiveSyncFailures: 0,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
 
 describe('JobIngestOrchestrationService', () => {
   let prisma: {
-    jobSource: { findUnique: jest.Mock; update: jest.Mock; findMany: jest.Mock };
+    jobSource: {
+      findUnique: jest.Mock;
+      update: jest.Mock;
+      findMany: jest.Mock;
+    };
     externalJob: { upsert: jest.Mock; updateMany: jest.Mock };
     $transaction: jest.Mock;
   };
@@ -83,6 +88,7 @@ describe('JobIngestOrchestrationService', () => {
         lastSuccessAt: expect.any(Date),
         lastErrorAt: null,
         lastErrorMessage: null,
+        consecutiveSyncFailures: 0,
       }),
     });
   });
@@ -168,10 +174,29 @@ describe('JobIngestOrchestrationService', () => {
       data: expect.objectContaining({
         lastErrorAt: expect.any(Date),
         lastErrorMessage: expect.stringContaining('network down'),
+        consecutiveSyncFailures: 1,
       }),
     });
     expect(prisma.externalJob.upsert).not.toHaveBeenCalled();
     expect(prisma.externalJob.updateMany).not.toHaveBeenCalled();
+  });
+
+  it('resets consecutiveSyncFailures on successful sync after failures', async () => {
+    prisma.jobSource.findUnique.mockResolvedValueOnce({
+      ...JOB_SOURCE_ROW,
+      consecutiveSyncFailures: 2,
+    });
+    port.fetchSnapshot.mockResolvedValue({ rawListings: [] });
+
+    const service = buildService();
+    await service.syncExternalJobs(JOB_SOURCE_ROW.id);
+
+    expect(prisma.jobSource.update).toHaveBeenCalledWith({
+      where: { id: JOB_SOURCE_ROW.id },
+      data: expect.objectContaining({
+        consecutiveSyncFailures: 0,
+      }),
+    });
   });
 
   it('inactivates jobs missing from the latest snapshot', async () => {

@@ -1,7 +1,4 @@
-import {
-  ExternalExperienceLevel,
-  ExternalJobRemoteType,
-} from '@prisma/client';
+import { ExternalExperienceLevel, ExternalJobRemoteType } from '@prisma/client';
 import {
   buildMatchReason,
   jobInputFromExternalJob,
@@ -35,7 +32,11 @@ describe('job-match-scoring', () => {
   };
 
   it('scores a strong profile/job fit highly', () => {
-    const result = scoreJobMatch(profile, job, new Date('2026-05-20T00:00:00.000Z'));
+    const result = scoreJobMatch(
+      profile,
+      job,
+      new Date('2026-05-20T00:00:00.000Z'),
+    );
 
     expect(result.overallScore).toBeGreaterThanOrEqual(70);
     expect(result.matchedSkills).toEqual(
@@ -65,8 +66,18 @@ describe('job-match-scoring', () => {
   });
 
   it('decays recency for older postings', () => {
-    expect(scoreRecency(new Date('2026-05-18T00:00:00.000Z'), new Date('2026-05-20T00:00:00.000Z'))).toBe(100);
-    expect(scoreRecency(new Date('2026-01-01T00:00:00.000Z'), new Date('2026-05-20T00:00:00.000Z'))).toBeLessThan(70);
+    expect(
+      scoreRecency(
+        new Date('2026-05-18T00:00:00.000Z'),
+        new Date('2026-05-20T00:00:00.000Z'),
+      ),
+    ).toBe(100);
+    expect(
+      scoreRecency(
+        new Date('2026-01-01T00:00:00.000Z'),
+        new Date('2026-05-20T00:00:00.000Z'),
+      ),
+    ).toBeLessThan(70);
   });
 
   it('maps prisma records into scoring inputs', () => {

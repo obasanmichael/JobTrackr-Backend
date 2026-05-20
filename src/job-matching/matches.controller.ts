@@ -1,4 +1,11 @@
-import { Controller, Get, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiConflictResponse,
@@ -27,19 +34,25 @@ export class MatchesController {
     summary: 'List ranked job matches for the current user (cached ≤24h)',
   })
   @ApiOkResponse({ type: JobMatchListResponseDto })
-  list(@CurrentUserDecorator() user: CurrentUser): Promise<JobMatchListResponseDto> {
+  list(
+    @CurrentUserDecorator() user: CurrentUser,
+  ): Promise<JobMatchListResponseDto> {
     return this.jobMatchingService.listMatches(user);
   }
 
   @Post('generate')
   @HttpCode(HttpStatus.OK)
   @Throttle(MATCHES_GENERATE_THROTTLE)
-  @ApiOperation({ summary: 'Force refresh of job matches for the current user' })
+  @ApiOperation({
+    summary: 'Force refresh of job matches for the current user',
+  })
   @ApiOkResponse({ type: JobMatchListResponseDto })
   @ApiConflictResponse({
     description: 'User has no parsed resume / candidate profile yet',
   })
-  @ApiTooManyRequestsResponse({ description: 'Match generation rate limit exceeded' })
+  @ApiTooManyRequestsResponse({
+    description: 'Match generation rate limit exceeded',
+  })
   generate(
     @CurrentUserDecorator() user: CurrentUser,
   ): Promise<JobMatchListResponseDto> {

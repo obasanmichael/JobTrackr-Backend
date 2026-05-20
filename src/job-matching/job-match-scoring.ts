@@ -1,7 +1,4 @@
-import {
-  ExternalExperienceLevel,
-  ExternalJobRemoteType,
-} from '@prisma/client';
+import { ExternalExperienceLevel, ExternalJobRemoteType } from '@prisma/client';
 
 export type MatchProfileInput = {
   roles: string[];
@@ -62,7 +59,10 @@ export function buildJobMatchCorpus(job: MatchJobInput): string {
   );
 }
 
-export function scoreTitleMatch(profile: MatchProfileInput, job: MatchJobInput): number {
+export function scoreTitleMatch(
+  profile: MatchProfileInput,
+  job: MatchJobInput,
+): number {
   const title = normalizeMatchText(job.title);
   if (!title) {
     return 0;
@@ -96,7 +96,10 @@ export function scoreTitleMatch(profile: MatchProfileInput, job: MatchJobInput):
 export function scoreSkillMatch(
   profile: MatchProfileInput,
   job: MatchJobInput,
-): Pick<JobMatchScoreBreakdown, 'skillScore' | 'matchedSkills' | 'missingSkills'> {
+): Pick<
+  JobMatchScoreBreakdown,
+  'skillScore' | 'matchedSkills' | 'missingSkills'
+> {
   const corpus = buildJobMatchCorpus(job);
   const candidates = [...new Set([...profile.skills, ...profile.tools])];
 
@@ -112,7 +115,9 @@ export function scoreSkillMatch(
     }
   }
 
-  const skillScore = Math.round((matchedSkills.length / candidates.length) * 100);
+  const skillScore = Math.round(
+    (matchedSkills.length / candidates.length) * 100,
+  );
 
   const missingSkills = extractMissingSkills(corpus, candidates, matchedSkills);
 
@@ -230,7 +235,10 @@ export function scoreLocationMatch(
     }
   }
 
-  if (profile.workModes.length > 0 && job.remoteType !== ExternalJobRemoteType.UNSPECIFIED) {
+  if (
+    profile.workModes.length > 0 &&
+    job.remoteType !== ExternalJobRemoteType.UNSPECIFIED
+  ) {
     const remoteToken = job.remoteType.toLowerCase();
     const modeHit = profile.workModes.some(
       (mode) => normalizeMatchText(mode) === remoteToken,
@@ -266,10 +274,7 @@ export function scoreRecency(postedAt: Date | null, now = new Date()): number {
 }
 
 export function buildMatchReason(
-  breakdown: Omit<
-    JobMatchScoreBreakdown,
-    'overallScore' | 'matchReason'
-  >,
+  breakdown: Omit<JobMatchScoreBreakdown, 'overallScore' | 'matchReason'>,
 ): string {
   const reasons: string[] = [];
 

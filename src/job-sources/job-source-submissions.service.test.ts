@@ -152,9 +152,9 @@ describe('JobSourceSubmissionsService', () => {
       const result = await service.approve('sub-1');
 
       expect(jobSourcesService.createForAdmin).toHaveBeenCalled();
-      expect(jobIngestOrchestrationService.syncExternalJobs).toHaveBeenCalledWith(
-        'src-1',
-      );
+      expect(
+        jobIngestOrchestrationService.syncExternalJobs,
+      ).toHaveBeenCalledWith('src-1');
       expect(result.sync?.upsertedCount).toBe(3);
       expect(result.submission.status).toBe(JobSourceSubmissionStatus.APPROVED);
     });

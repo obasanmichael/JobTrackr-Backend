@@ -24,6 +24,7 @@ describe('JobSourcesService', () => {
     lastSuccessAt: null,
     lastErrorAt: null,
     lastErrorMessage: null,
+    consecutiveSyncFailures: 0,
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-02'),
   } as const satisfies Partial<JobSource>;

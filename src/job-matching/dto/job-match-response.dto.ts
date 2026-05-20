@@ -41,7 +41,8 @@ export class JobMatchListResponseDto {
   total!: number;
 
   @ApiProperty({
-    description: 'True when the user needs a parsed resume/profile before matching.',
+    description:
+      'True when the user needs a parsed resume/profile before matching.',
   })
   requiresProfile!: boolean;
 

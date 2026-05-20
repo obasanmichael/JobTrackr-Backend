@@ -32,10 +32,7 @@ export function parseAtsCareersUrl(raw: string): AtsCareersUrlDetection {
   const segments = url.pathname.split('/').filter(Boolean);
   const slug = segments[0]?.trim() ?? null;
 
-  if (
-    host === 'boards.greenhouse.io' ||
-    host === 'job-boards.greenhouse.io'
-  ) {
+  if (host === 'boards.greenhouse.io' || host === 'job-boards.greenhouse.io') {
     return {
       detectedAtsType: slug ? 'GREENHOUSE' : null,
       detectedSlug: slug,

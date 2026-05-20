@@ -68,9 +68,7 @@ export type LaunchEmployersSeedFile = z.infer<
 
 export function parseLaunchEmployersSeedFile(
   raw: unknown,
-):
-  | { ok: true; value: LaunchEmployersSeedFile }
-  | { ok: false; error: string } {
+): { ok: true; value: LaunchEmployersSeedFile } | { ok: false; error: string } {
   const parsed = launchEmployersSeedFileSchema.safeParse(raw);
   if (!parsed.success) {
     return {

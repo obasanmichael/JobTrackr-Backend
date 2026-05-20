@@ -23,7 +23,11 @@ export function findMatchingJobSourceForSubmission(
       return true;
     }
 
-    if (!row.config || typeof row.config !== 'object' || Array.isArray(row.config)) {
+    if (
+      !row.config ||
+      typeof row.config !== 'object' ||
+      Array.isArray(row.config)
+    ) {
       return false;
     }
 
@@ -43,11 +47,7 @@ export function findMatchingJobSourceForSubmission(
 export function buildJobSourceUpsertFromSubmission(
   submission: Pick<
     JobSourceSubmission,
-    | 'id'
-    | 'companyName'
-    | 'careersUrl'
-    | 'detectedAtsType'
-    | 'detectedSlug'
+    'id' | 'companyName' | 'careersUrl' | 'detectedAtsType' | 'detectedSlug'
   >,
 ): JobSourceSeedUpsertInput {
   const slug = submission.detectedSlug?.trim() ?? null;
@@ -69,7 +69,7 @@ export function buildJobSourceUpsertFromSubmission(
         ...sharedConfig,
         provider: 'GREENHOUSE',
         board_token: slug,
-      } as Prisma.InputJsonValue,
+      },
     };
   }
 
@@ -83,7 +83,7 @@ export function buildJobSourceUpsertFromSubmission(
         ...sharedConfig,
         provider: 'LEVER',
         site: slug,
-      } as Prisma.InputJsonValue,
+      },
     };
   }
 
@@ -98,7 +98,7 @@ export function buildJobSourceUpsertFromSubmission(
         provider: 'ASHBY',
         orgSlug: slug,
         sourceStatus: 'CANDIDATE',
-      } as Prisma.InputJsonValue,
+      },
     };
   }
 
@@ -110,6 +110,6 @@ export function buildJobSourceUpsertFromSubmission(
     config: {
       ...sharedConfig,
       sourceStatus: 'CANDIDATE',
-    } as Prisma.InputJsonValue,
+    },
   };
 }

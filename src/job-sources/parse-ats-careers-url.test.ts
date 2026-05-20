@@ -25,10 +25,7 @@ describe('parseAtsCareersUrl', () => {
       'https://example.com/careers',
       { detectedAtsType: null, detectedSlug: null },
     ],
-    [
-      'not-a-url',
-      { detectedAtsType: null, detectedSlug: null },
-    ],
+    ['not-a-url', { detectedAtsType: null, detectedSlug: null }],
   ])('detects ATS from %s', (input, expected) => {
     expect(parseAtsCareersUrl(input)).toEqual(expected);
   });

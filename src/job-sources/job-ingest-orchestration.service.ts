@@ -10,6 +10,11 @@ import { PrismaService } from '../prisma/prisma.service';
 import { buildExternalJobUpsertArgs } from './normalization/generic-job-listing-to-prisma';
 import { parseGenericJobListing } from './normalization/generic-job-listing.schema';
 import { buildStaleExternalJobWhere } from './deactivate-stale-external-jobs';
+import {
+  jobSourceSyncFailureHealthData,
+  jobSourceSyncSuccessHealthData,
+  nextJobSourceSyncFailureState,
+} from './job-source-sync-health';
 import type { JobSourceSyncPort } from './sync/job-source-sync.port';
 import { JOB_SOURCE_SYNC_PORT } from './sync/job-source-sync.tokens';
 
@@ -26,13 +31,17 @@ export type JobIngestSyncResult = {
 };
 
 export type JobIngestSyncLogPayload = {
-  event: 'job_ingest_sync_complete' | 'job_ingest_sync_failed';
+  event:
+    | 'job_ingest_sync_complete'
+    | 'job_ingest_sync_failed'
+    | 'job_source_sync_alert';
   jobSourceId: string;
   upsertedCount?: number;
   skippedInvalid?: number;
   inactivatedCount?: number;
   durationMs: number;
   errorMessage?: string;
+  consecutiveSyncFailures?: number;
 };
 
 export type JobSourceBulkSyncItemResult = {
@@ -155,12 +164,7 @@ export class JobIngestOrchestrationService {
 
       await this.prisma.jobSource.update({
         where: { id: jobSourceId },
-        data: {
-          lastSyncAt: syncedAt,
-          lastSuccessAt: syncedAt,
-          lastErrorAt: null,
-          lastErrorMessage: null,
-        },
+        data: jobSourceSyncSuccessHealthData(syncedAt),
       });
 
       return {
@@ -173,14 +177,17 @@ export class JobIngestOrchestrationService {
     } catch (error) {
       const durationMs = Date.now() - startedAt;
       const message = JobIngestOrchestrationService.truncateErrorMessage(error);
+      const failureState = nextJobSourceSyncFailureState(
+        sourceRow.consecutiveSyncFailures,
+      );
 
       await this.prisma.jobSource.update({
         where: { id: jobSourceId },
-        data: {
-          lastSyncAt: syncedAt,
-          lastErrorAt: syncedAt,
-          lastErrorMessage: message,
-        },
+        data: jobSourceSyncFailureHealthData(
+          syncedAt,
+          message,
+          failureState.consecutiveSyncFailures,
+        ),
       });
 
       this.logger.error(
@@ -189,9 +196,22 @@ export class JobIngestOrchestrationService {
           jobSourceId,
           durationMs,
           errorMessage: message,
+          consecutiveSyncFailures: failureState.consecutiveSyncFailures,
         } satisfies JobIngestSyncLogPayload),
         error instanceof Error ? error.stack : undefined,
       );
+
+      if (failureState.shouldAlert) {
+        this.logger.error(
+          JSON.stringify({
+            event: 'job_source_sync_alert',
+            jobSourceId,
+            durationMs,
+            errorMessage: message,
+            consecutiveSyncFailures: failureState.consecutiveSyncFailures,
+          } satisfies JobIngestSyncLogPayload),
+        );
+      }
 
       throw new BadGatewayException(message, {
         cause: error,

@@ -358,6 +358,13 @@ missingSkills       # string[] (optional, top gaps only)
 | **J.3** | Alerting hook (log/metric) when source fails N consecutive syncs. |
 | **J.4** | Inactive job retention policy (e.g. purge `isActive=false` older than 90d) — optional, configurable. |
 
+### Phase J completion (implemented)
+
+- [x] **J.1** — **`ExternalJob.isSuspicious`** + **`qualityFlags`**; rules for missing/invalid apply URL, salary outliers, duplicate **`contentHash`**; **`POST /api/v1/admin/job-quality/scan`**; CLI **`npm run quality:scan-external-jobs`**; suspicious rows excluded from **`GET /jobs`** and matching.
+- [x] **J.2** — Web admin **`/dashboard/admin/job-sources`**: lists sources with **`lastSyncAt`**, **`lastSuccessAt`**, **`lastErrorAt`**, **`lastErrorMessage`**, **`consecutiveSyncFailures`**; per-source sync + bulk sync-active; quality scan + inactive purge (dry-run) actions.
+- [x] **J.3** — **`JobSource.consecutiveSyncFailures`** incremented on sync failure, reset on success; structured log event **`job_source_sync_alert`** when threshold (**`JOB_SOURCE_CONSECUTIVE_FAILURE_ALERT_THRESHOLD`**, default 3) is reached.
+- [x] **J.4** — Purge helper + **`POST /api/v1/admin/job-quality/purge-inactive?dryRun=`**; CLI **`npm run quality:purge-inactive-external-jobs`**; gated by **`EXTERNAL_JOB_PURGE_ENABLED`**; retention **`EXTERNAL_JOB_INACTIVE_RETENTION_DAYS`** (default 90).
+
 ---
 
 ## Phase K — Scale after proof

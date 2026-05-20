@@ -297,6 +297,8 @@ model JobSource {
   lastSuccessAt    DateTime?
   lastErrorAt      DateTime?
   lastErrorMessage String?
+  /** Incremented on each failed ingest sync; reset on success (Phase J.3). */
+  consecutiveSyncFailures Int @default(0)
   /** Per-ATS opaque settings (board_token, Lever site slug, etc.) — Phase A ingest plan. */
   config           Json?
   externalJobs     ExternalJob[]
@@ -332,6 +334,10 @@ model ExternalJob {
   rawPayload      Json?
   contentHash     String?
   isActive        Boolean                     @default(true)
+  /** Phase J.1 — set by weekly quality scan when apply URL, salary, or duplicate hash issues are detected. */
+  isSuspicious    Boolean                     @default(false)
+  /** Phase J.1 — machine-readable reasons, e.g. MISSING_APPLICATION_URL, DUPLICATE_CONTENT_HASH. */
+  qualityFlags    Json?
   createdAt       DateTime                    @default(now())
   updatedAt       DateTime                    @updatedAt
   jobMatchResults JobMatchResult[]
@@ -342,6 +348,7 @@ model ExternalJob {
   @@index([postedAt])
   @@index([company])
   @@index([contentHash])
+  @@index([isSuspicious])
 }
 
 enum JobSourceType {

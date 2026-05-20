@@ -3,7 +3,11 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import type { CandidateProfile, ExternalJob, JobMatchResult } from '@prisma/client';
+import type {
+  CandidateProfile,
+  ExternalJob,
+  JobMatchResult,
+} from '@prisma/client';
 import { Prisma } from '@prisma/client';
 import type { CurrentUser } from '../common/types/current-user.type';
 import { mapExternalJobToListingDto } from '../jobs/external-job.mapper';
@@ -69,7 +73,7 @@ export class JobMatchingService {
   ): Promise<JobSingleMatchResponseDto> {
     const profile = await this.resolveProfileForUser(user.userId);
     const job = await this.prisma.externalJob.findFirst({
-      where: { id: externalJobId, isActive: true },
+      where: { id: externalJobId, isActive: true, isSuspicious: false },
     });
     if (!job) {
       throw new NotFoundException('Job not found');
@@ -142,7 +146,7 @@ export class JobMatchingService {
     profile: CandidateProfile,
   ): Promise<JobMatchListResponseDto> {
     const jobs = await this.prisma.externalJob.findMany({
-      where: { isActive: true },
+      where: { isActive: true, isSuspicious: false },
       orderBy: [{ postedAt: 'desc' }, { updatedAt: 'desc' }],
       take: MATCH_JOB_POOL_SIZE,
     });
@@ -224,8 +228,8 @@ export class JobMatchingService {
       experienceScore: row.experienceScore,
       locationScore: row.locationScore,
       recencyScore: row.recencyScore,
-      matchedSkills: row.matchedSkills as Prisma.InputJsonValue,
-      missingSkills: row.missingSkills as Prisma.InputJsonValue,
+      matchedSkills: row.matchedSkills,
+      missingSkills: row.missingSkills,
       matchReason: row.matchReason,
     };
   }

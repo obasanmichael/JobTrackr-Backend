@@ -113,6 +113,7 @@ export class JobSourcesService {
       lastSuccessAt: row.lastSuccessAt,
       lastErrorAt: row.lastErrorAt,
       lastErrorMessage: row.lastErrorMessage,
+      consecutiveSyncFailures: row.consecutiveSyncFailures,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     };

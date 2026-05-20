@@ -23,7 +23,9 @@ export function remoteTypeToWorkMode(
   }
 }
 
-export function workModeToRemoteType(workMode: WorkMode): ExternalJobRemoteType {
+export function workModeToRemoteType(
+  workMode: WorkMode,
+): ExternalJobRemoteType {
   switch (workMode) {
     case WorkMode.REMOTE:
       return ExternalJobRemoteType.REMOTE;
@@ -41,6 +43,7 @@ export function buildJobSearchWhere(
 ): Prisma.ExternalJobWhereInput {
   const where: Prisma.ExternalJobWhereInput = {
     isActive: true,
+    isSuspicious: false,
   };
 
   const keyword = query.q?.trim();
@@ -89,7 +92,9 @@ export function buildJobSearchWhere(
   return where;
 }
 
-export function buildJobExcerpt(description: string | null | undefined): string | null {
+export function buildJobExcerpt(
+  description: string | null | undefined,
+): string | null {
   if (!description?.trim()) {
     return null;
   }

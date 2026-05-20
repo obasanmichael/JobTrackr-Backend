@@ -24,6 +24,7 @@ describe('job-search.filters', () => {
     const where = buildJobSearchWhere({ q: 'engineer' });
 
     expect(where.isActive).toBe(true);
+    expect(where.isSuspicious).toBe(false);
     expect(where.OR).toEqual([
       { title: { contains: 'engineer', mode: 'insensitive' } },
       { company: { contains: 'engineer', mode: 'insensitive' } },

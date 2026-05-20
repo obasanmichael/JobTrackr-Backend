@@ -66,7 +66,9 @@ describe('JobMatchingService', () => {
 
   beforeEach(() => {
     prisma = {
-      resume: { findFirst: jest.fn().mockResolvedValue({ candidateProfile: profile }) },
+      resume: {
+        findFirst: jest.fn().mockResolvedValue({ candidateProfile: profile }),
+      },
       candidateProfile: { findFirst: jest.fn() },
       externalJob: {
         findMany: jest.fn().mockResolvedValue([job]),
@@ -77,7 +79,9 @@ describe('JobMatchingService', () => {
         deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
         upsert: jest.fn().mockResolvedValue({}),
       },
-      $transaction: jest.fn(async (ops: Promise<unknown>[]) => Promise.all(ops)),
+      $transaction: jest.fn(async (ops: Promise<unknown>[]) =>
+        Promise.all(ops),
+      ),
     };
 
     service = new JobMatchingService(prisma as unknown as PrismaService);

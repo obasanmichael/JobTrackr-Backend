@@ -38,7 +38,7 @@ export class JobsService {
 
   async findActiveById(id: string): Promise<JobDetailDto> {
     const row = await this.prisma.externalJob.findFirst({
-      where: { id, isActive: true },
+      where: { id, isActive: true, isSuspicious: false },
     });
     if (!row) {
       throw new NotFoundException('Job not found');

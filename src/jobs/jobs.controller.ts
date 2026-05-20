@@ -1,4 +1,11 @@
-import { Controller, Get, Param, ParseUUIDPipe, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiNotFoundResponse,
@@ -36,7 +43,9 @@ export class JobsController {
   }
 
   @Get(':id/match')
-  @ApiOperation({ summary: 'Score one active job against the current user profile' })
+  @ApiOperation({
+    summary: 'Score one active job against the current user profile',
+  })
   @ApiOkResponse({ type: JobSingleMatchResponseDto })
   @ApiNotFoundResponse({ description: 'Job not found or inactive' })
   matchOne(

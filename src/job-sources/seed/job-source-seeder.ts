@@ -108,7 +108,11 @@ export function planJobSourceSeed(
 }> {
   const allowed =
     options?.includeStatuses ??
-    (['ACTIVE', 'CANDIDATE', 'PAUSED'] as LaunchEmployerSeedRow['sourceStatus'][]);
+    ([
+      'ACTIVE',
+      'CANDIDATE',
+      'PAUSED',
+    ] as LaunchEmployerSeedRow['sourceStatus'][]);
 
   return seedFile.employers
     .filter((employer) => allowed.includes(employer.sourceStatus))

@@ -43,6 +43,8 @@ describe('JobsService', () => {
     rawPayload: {},
     contentHash: 'abc',
     isActive: true,
+    isSuspicious: false,
+    qualityFlags: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   } satisfies ExternalJob;
@@ -82,7 +84,7 @@ describe('JobsService', () => {
     );
     expect(prisma.externalJob.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ isActive: true }),
+        where: expect.objectContaining({ isActive: true, isSuspicious: false }),
         skip: 0,
         take: 20,
       }),
