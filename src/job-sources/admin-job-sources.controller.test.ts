@@ -15,6 +15,7 @@ describe('AdminJobSourcesController', () => {
   };
   let jobIngestOrchestrationService: {
     syncExternalJobs: jest.Mock;
+    syncAllActiveJobSources: jest.Mock;
   };
 
   const jobSourceId = '11111111-1111-1111-8111-111111111111';
@@ -27,6 +28,7 @@ describe('AdminJobSourcesController', () => {
     };
     jobIngestOrchestrationService = {
       syncExternalJobs: jest.fn(),
+      syncAllActiveJobSources: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -88,6 +90,42 @@ describe('AdminJobSourcesController', () => {
       await expect(controller.sync(jobSourceId)).rejects.toBeInstanceOf(
         BadGatewayException,
       );
+    });
+  });
+
+  describe('syncActive', () => {
+    it('returns bulk sync summary from orchestration', async () => {
+      jobIngestOrchestrationService.syncAllActiveJobSources = jest
+        .fn()
+        .mockResolvedValueOnce({
+          attempted: 2,
+          succeeded: 1,
+          failed: 1,
+          results: [
+            {
+              jobSourceId: 'a',
+              name: 'A',
+              ok: true,
+              upsertedCount: 3,
+              skippedInvalid: 0,
+              syncedAt: new Date('2026-05-19T12:00:00.000Z'),
+            },
+            {
+              jobSourceId: 'b',
+              name: 'B',
+              ok: false,
+              errorMessage: 'network down',
+            },
+          ],
+        });
+
+      const result = await controller.syncActive();
+
+      expect(
+        jobIngestOrchestrationService.syncAllActiveJobSources,
+      ).toHaveBeenCalled();
+      expect(result.attempted).toBe(2);
+      expect(result.failed).toBe(1);
     });
   });
 });

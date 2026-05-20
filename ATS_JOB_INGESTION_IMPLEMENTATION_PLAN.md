@@ -203,7 +203,35 @@ For **job search** and **job matching** specifically:
 | **H.3** | Document runbook: enable source → `POST …/sync` → verify `lastSuccessAt` → spot-check `GET /jobs`. |
 | **H.4** | Daily sync: MVP = admin/cron hits sync-all-active endpoint; later = queue worker per source with concurrency cap. |
 
-**Exit:** ≥1 board per ATS type synced; search returns non-empty results for at least one filter combo.
+### Phase H completion (implemented)
+
+- [x] **H.1** — `data/launch-employers.seed.json` (34 verified Greenhouse/Lever boards for NG/UK/US IT niche) + `npm run seed:job-sources` (`scripts/seed-job-sources.ts`); idempotent upsert by `seedKey` / `companyName`; supports `--dry-run`, `--file`, `--status`.
+- [x] **H.2** — `launchMarkets`, `roleFamilies`, `sourceStatus`, `priority`, `careersUrl` stored in **`JobSource.config`** metadata (no migration).
+- [x] **H.3** — Runbook below.
+- [x] **H.4** — **`POST /api/v1/admin/job-sources/sync-active`** runs sequential sync for all **`isActive`** sources ordered by `config.priority` then name; per-source failures do not abort the batch.
+
+**Exit:** ≥1 board per ATS type synced; search returns non-empty results for at least one filter combo (after **E** + sync).
+
+### Ops runbook (H.3)
+
+1. **Seed employers** (local/staging/prod with `DATABASE_URL` set):
+   ```bash
+   npm run seed:job-sources -- --dry-run          # validate JSON + plan
+   npm run seed:job-sources                       # upsert JobSource rows
+   npm run seed:job-sources -- --status ACTIVE    # only ACTIVE rows
+   ```
+2. **Sync one source** (admin JWT + `ADMIN_USER_IDS`):
+   ```http
+   POST /api/v1/admin/job-sources/{id}/sync
+   ```
+3. **Sync all active sources** (daily cron MVP):
+   ```http
+   POST /api/v1/admin/job-sources/sync-active
+   ```
+4. **Verify health**: `GET /api/v1/admin/job-sources` → check `lastSuccessAt`, `lastErrorMessage`.
+5. **Spot-check listings**: after Phase **E**, `GET /api/v1/jobs?q=engineer&limit=5`.
+
+**Cron example:** hit `sync-active` once daily via Railway/Fly cron, GitHub Action, or `curl` from ops machine with admin token.
 
 ---
 
@@ -375,13 +403,13 @@ Routing today:
 | D — Admin sync trigger | Done | Small |
 | E — Job Search API + FE | Not started (stub controller) | Medium |
 | G — Dedupe + stale | Not started | Small–Medium |
-| H — Launch employer seed + ops | Not started | Small (+ your list validation) |
+| H — Launch employer seed + ops | Done | Small (+ expand list over time) |
 | M — Matched Jobs MVP | Not started | Medium |
 | I — Careers page submissions | Not started | Medium |
 | J — Trust / quality jobs | Not started | Small |
 | K — Scale | Ongoing | Large |
 
-**Next actionable coding step:** **H.1** seed script → **G** → **E** → **M**.
+**Next actionable coding step:** **G** (dedupe + stale) → **E** (real `GET /jobs`) → **M**.
 
 ---
 

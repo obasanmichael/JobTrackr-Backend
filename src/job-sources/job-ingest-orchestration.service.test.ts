@@ -22,7 +22,7 @@ const JOB_SOURCE_ROW = {
 
 describe('JobIngestOrchestrationService', () => {
   let prisma: {
-    jobSource: { findUnique: jest.Mock; update: jest.Mock };
+    jobSource: { findUnique: jest.Mock; update: jest.Mock; findMany: jest.Mock };
     externalJob: { upsert: jest.Mock };
     $transaction: jest.Mock;
   };
@@ -46,6 +46,7 @@ describe('JobIngestOrchestrationService', () => {
       jobSource: {
         findUnique: jest.fn().mockResolvedValue(JOB_SOURCE_ROW),
         update: jest.fn().mockResolvedValue({}),
+        findMany: jest.fn().mockResolvedValue([]),
       },
       externalJob: {
         upsert: jest.fn().mockResolvedValue({}),
@@ -148,5 +149,36 @@ describe('JobIngestOrchestrationService', () => {
       }),
     });
     expect(prisma.externalJob.upsert).not.toHaveBeenCalled();
+  });
+
+  it('syncAllActive continues after individual source failures', async () => {
+    const sources = [
+      { ...JOB_SOURCE_ROW, id: 'src-a', name: 'Alpha' },
+      { ...JOB_SOURCE_ROW, id: 'src-b', name: 'Beta' },
+    ];
+
+    prisma.jobSource.findMany.mockResolvedValueOnce(sources);
+    port.fetchSnapshot
+      .mockResolvedValueOnce({
+        rawListings: [
+          {
+            externalJobId: '1',
+            title: 'Engineer',
+            company: 'Alpha',
+            applicationUrl: 'https://jobs.example/1',
+          },
+        ],
+      })
+      .mockRejectedValueOnce(new Error('network down'));
+
+    const service = buildService();
+    const result = await service.syncAllActiveJobSources();
+
+    expect(result.attempted).toBe(2);
+    expect(result.succeeded).toBe(1);
+    expect(result.failed).toBe(1);
+    expect(result.results[0]?.ok).toBe(true);
+    expect(result.results[1]?.ok).toBe(false);
+    expect(result.results[1]?.errorMessage).toContain('network down');
   });
 });

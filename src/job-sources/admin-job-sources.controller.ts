@@ -24,6 +24,7 @@ import { AdminGuard } from '../common/guards/admin.guard';
 import { CreateJobSourceAdminDto } from './dto/create-job-source-admin.dto';
 import { JobSourceAdminResponseDto } from './dto/job-source-admin-response.dto';
 import { JobSourceSyncResponseDto } from './dto/job-source-sync-response.dto';
+import { JobSourceBulkSyncResponseDto } from './dto/job-source-bulk-sync-response.dto';
 import { UpdateJobSourceAdminDto } from './dto/update-job-source-admin.dto';
 import { JobIngestOrchestrationService } from './job-ingest-orchestration.service';
 import { JobSourcesService } from './job-sources.service';
@@ -64,6 +65,17 @@ export class AdminJobSourcesController {
     @Body() dto: UpdateJobSourceAdminDto,
   ): Promise<JobSourceAdminResponseDto> {
     return this.jobSourcesService.updateForAdmin(id, dto);
+  }
+
+  @Post('sync-active')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary:
+      'Run ingest sync for all active job sources (sequential; continues after individual failures)',
+  })
+  @ApiOkResponse({ type: JobSourceBulkSyncResponseDto })
+  syncActive(): Promise<JobSourceBulkSyncResponseDto> {
+    return this.jobIngestOrchestrationService.syncAllActiveJobSources();
   }
 
   @Post(':id/sync')

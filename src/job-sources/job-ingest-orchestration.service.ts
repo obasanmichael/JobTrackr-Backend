@@ -22,6 +22,23 @@ export type JobIngestSyncResult = {
   syncedAt: Date;
 };
 
+export type JobSourceBulkSyncItemResult = {
+  jobSourceId: string;
+  name: string;
+  ok: boolean;
+  upsertedCount?: number;
+  skippedInvalid?: number;
+  syncedAt?: Date;
+  errorMessage?: string;
+};
+
+export type JobSourceBulkSyncResult = {
+  attempted: number;
+  succeeded: number;
+  failed: number;
+  results: JobSourceBulkSyncItemResult[];
+};
+
 @Injectable()
 export class JobIngestOrchestrationService {
   private readonly logger = new Logger(JobIngestOrchestrationService.name);
@@ -130,6 +147,68 @@ export class JobIngestOrchestrationService {
         cause: error,
       });
     }
+  }
+
+  /**
+   * Sync every active job source sequentially (priority asc from config, then name).
+   * Failures on one source do not abort the rest.
+   */
+  async syncAllActiveJobSources(): Promise<JobSourceBulkSyncResult> {
+    const sources = await this.prisma.jobSource.findMany({
+      where: { isActive: true },
+      orderBy: [{ name: 'asc' }],
+    });
+
+    const sorted = [...sources].sort(
+      (a, b) =>
+        JobIngestOrchestrationService.readPriorityFromConfig(a.config) -
+          JobIngestOrchestrationService.readPriorityFromConfig(b.config) ||
+        a.name.localeCompare(b.name),
+    );
+
+    const results: JobSourceBulkSyncItemResult[] = [];
+
+    for (const source of sorted) {
+      try {
+        const outcome = await this.syncExternalJobs(source.id);
+        results.push({
+          jobSourceId: source.id,
+          name: source.name,
+          ok: true,
+          upsertedCount: outcome.upsertedCount,
+          skippedInvalid: outcome.skippedInvalid,
+          syncedAt: outcome.syncedAt,
+        });
+      } catch (error) {
+        const errorMessage =
+          JobIngestOrchestrationService.truncateErrorMessage(error);
+        results.push({
+          jobSourceId: source.id,
+          name: source.name,
+          ok: false,
+          errorMessage,
+        });
+      }
+    }
+
+    const succeeded = results.filter((row) => row.ok).length;
+
+    return {
+      attempted: results.length,
+      succeeded,
+      failed: results.length - succeeded,
+      results,
+    };
+  }
+
+  private static readPriorityFromConfig(config: unknown): number {
+    if (!config || typeof config !== 'object' || Array.isArray(config)) {
+      return 10;
+    }
+    const priority = (config as Record<string, unknown>).priority;
+    return typeof priority === 'number' && Number.isFinite(priority)
+      ? priority
+      : 10;
   }
 
   private static truncateErrorMessage(error: unknown): string {
