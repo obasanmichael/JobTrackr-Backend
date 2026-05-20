@@ -188,6 +188,13 @@ For **job search** and **job matching** specifically:
 | **G.3** | Rate-limit admin sync endpoints; structured logging (source id, duration, upserted/skipped/inactivated counts). |
 | **G.4** | **Re-activate** jobs that reappear in a later sync (`isActive=true`, refresh fields). |
 
+### Phase G completion (implemented)
+
+- [x] **G.1** — **`computeExternalJobContentHash`** (`normalization/external-job-content-hash.ts`); persisted on every upsert via **`buildExternalJobUpsertArgs`**.
+- [x] **G.2** — Post-upsert **`updateMany`** marks missing snapshot IDs inactive per source (**`deactivate-stale-external-jobs.ts`**); empty snapshot deactivates all active rows for that source.
+- [x] **G.3** — **`@Throttle(ADMIN_SYNC_THROTTLE)`** on sync routes (`ADMIN_SYNC_THROTTLE_LIMIT`, default **10/min**); JSON structured logs **`job_ingest_sync_complete`** / **`job_ingest_sync_failed`**; sync API returns **`inactivatedCount`** + **`durationMs`**.
+- [x] **G.4** — Upsert **`update`** sets **`isActive: true`** (and refreshes fields) when a job reappears.
+
 **Exit:** Same job re-synced updates in place; jobs missing from later syncs become inactive, not deleted.
 
 ---
@@ -402,14 +409,14 @@ Routing today:
 | C.3–C.5 Ashby / USAJOBS / SmartRecruiters | Not started | Medium each |
 | D — Admin sync trigger | Done | Small |
 | E — Job Search API + FE | Not started (stub controller) | Medium |
-| G — Dedupe + stale | Not started | Small–Medium |
+| G — Dedupe + stale | Done | Small–Medium |
 | H — Launch employer seed + ops | Done | Small (+ expand list over time) |
 | M — Matched Jobs MVP | Not started | Medium |
 | I — Careers page submissions | Not started | Medium |
 | J — Trust / quality jobs | Not started | Small |
 | K — Scale | Ongoing | Large |
 
-**Next actionable coding step:** **G** (dedupe + stale) → **E** (real `GET /jobs`) → **M**.
+**Next actionable coding step:** **E** (real `GET /jobs`) → **M**.
 
 ---
 

@@ -4,6 +4,7 @@ import {
   ExternalJobEmploymentType,
   ExternalJobRemoteType,
 } from '@prisma/client';
+import { computeExternalJobContentHash } from './external-job-content-hash';
 import type { GenericJobListingDto } from './generic-job-listing.schema';
 
 /** Build Prisma upsert payloads for normalized generic listings (+ raw preserved). */
@@ -29,7 +30,12 @@ export function buildExternalJobUpsertArgs(
     requirements: listing.requirements ?? null,
     postedAt: listing.postedAt ?? null,
     expiresAt: listing.expiresAt ?? null,
-    contentHash: null,
+    contentHash: computeExternalJobContentHash({
+      title: listing.title,
+      company: listing.company,
+      location: listing.location,
+      applicationUrl: listing.applicationUrl,
+    }),
     currency: listing.currency ?? 'USD',
     remoteType: listing.remoteType ?? ExternalJobRemoteType.UNSPECIFIED,
     employmentType:
@@ -57,6 +63,25 @@ export function buildExternalJobUpsertArgs(
 function omitImmutableExternalJobKeys(
   create: Prisma.ExternalJobUncheckedCreateInput,
 ): Prisma.ExternalJobUpdateInput {
-  const { sourceId: _sid, externalJobId: _eid, ...rest } = create;
-  return rest;
+  return {
+    sourceName: create.sourceName,
+    rawPayload: create.rawPayload,
+    title: create.title,
+    company: create.company,
+    applicationUrl: create.applicationUrl,
+    location: create.location,
+    country: create.country,
+    salaryMin: create.salaryMin,
+    salaryMax: create.salaryMax,
+    description: create.description,
+    requirements: create.requirements,
+    postedAt: create.postedAt,
+    expiresAt: create.expiresAt,
+    contentHash: create.contentHash,
+    currency: create.currency,
+    remoteType: create.remoteType,
+    employmentType: create.employmentType,
+    experienceLevel: create.experienceLevel,
+    isActive: create.isActive ?? true,
+  };
 }

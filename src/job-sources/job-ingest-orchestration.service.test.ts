@@ -23,7 +23,7 @@ const JOB_SOURCE_ROW = {
 describe('JobIngestOrchestrationService', () => {
   let prisma: {
     jobSource: { findUnique: jest.Mock; update: jest.Mock; findMany: jest.Mock };
-    externalJob: { upsert: jest.Mock };
+    externalJob: { upsert: jest.Mock; updateMany: jest.Mock };
     $transaction: jest.Mock;
   };
   let port: jest.Mocked<Pick<JobSourceSyncPort, 'fetchSnapshot'>>;
@@ -50,6 +50,7 @@ describe('JobIngestOrchestrationService', () => {
       },
       externalJob: {
         upsert: jest.fn().mockResolvedValue({}),
+        updateMany: jest.fn().mockResolvedValue({ count: 0 }),
       },
       $transaction: jest.fn((calls: Promise<unknown>[]) => Promise.all(calls)),
     };
@@ -63,10 +64,19 @@ describe('JobIngestOrchestrationService', () => {
     await expect(service.syncExternalJobs(JOB_SOURCE_ROW.id)).resolves.toEqual({
       upsertedCount: 0,
       skippedInvalid: 0,
+      inactivatedCount: 0,
       syncedAt: expect.any(Date),
+      durationMs: expect.any(Number),
     });
 
     expect(prisma.externalJob.upsert).not.toHaveBeenCalled();
+    expect(prisma.externalJob.updateMany).toHaveBeenCalledWith({
+      where: {
+        sourceId: JOB_SOURCE_ROW.id,
+        isActive: true,
+      },
+      data: { isActive: false },
+    });
     expect(prisma.jobSource.update).toHaveBeenCalledWith({
       where: { id: JOB_SOURCE_ROW.id },
       data: expect.objectContaining({
@@ -102,9 +112,19 @@ describe('JobIngestOrchestrationService', () => {
     expect(result).toEqual({
       upsertedCount: 2,
       skippedInvalid: 0,
+      inactivatedCount: 0,
       syncedAt: expect.any(Date),
+      durationMs: expect.any(Number),
     });
     expect(prisma.externalJob.upsert).toHaveBeenCalledTimes(2);
+    expect(prisma.externalJob.updateMany).toHaveBeenCalledWith({
+      where: {
+        sourceId: JOB_SOURCE_ROW.id,
+        isActive: true,
+        externalJobId: { notIn: ['a', 'b'] },
+      },
+      data: { isActive: false },
+    });
     expect(prisma.$transaction).toHaveBeenCalled();
   });
 
@@ -126,7 +146,9 @@ describe('JobIngestOrchestrationService', () => {
     await expect(service.syncExternalJobs(JOB_SOURCE_ROW.id)).resolves.toEqual({
       upsertedCount: 1,
       skippedInvalid: 1,
+      inactivatedCount: 0,
       syncedAt: expect.any(Date),
+      durationMs: expect.any(Number),
     });
 
     expect(prisma.externalJob.upsert).toHaveBeenCalledTimes(1);
@@ -149,6 +171,34 @@ describe('JobIngestOrchestrationService', () => {
       }),
     });
     expect(prisma.externalJob.upsert).not.toHaveBeenCalled();
+    expect(prisma.externalJob.updateMany).not.toHaveBeenCalled();
+  });
+
+  it('inactivates jobs missing from the latest snapshot', async () => {
+    port.fetchSnapshot.mockResolvedValue({
+      rawListings: [
+        {
+          externalJobId: 'still-open',
+          title: 'Engineer',
+          company: 'Co',
+          applicationUrl: 'https://jobs.example/still-open',
+        },
+      ],
+    });
+    prisma.externalJob.updateMany.mockResolvedValueOnce({ count: 3 });
+
+    const service = buildService();
+    const result = await service.syncExternalJobs(JOB_SOURCE_ROW.id);
+
+    expect(result.inactivatedCount).toBe(3);
+    expect(prisma.externalJob.updateMany).toHaveBeenCalledWith({
+      where: {
+        sourceId: JOB_SOURCE_ROW.id,
+        isActive: true,
+        externalJobId: { notIn: ['still-open'] },
+      },
+      data: { isActive: false },
+    });
   });
 
   it('syncAllActive continues after individual source failures', async () => {

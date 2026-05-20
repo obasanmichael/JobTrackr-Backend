@@ -18,9 +18,12 @@ import {
   ApiOkResponse,
   ApiOperation,
   ApiTags,
+  ApiTooManyRequestsResponse,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdminGuard } from '../common/guards/admin.guard';
+import { ADMIN_SYNC_THROTTLE } from './admin-sync-throttle';
 import { CreateJobSourceAdminDto } from './dto/create-job-source-admin.dto';
 import { JobSourceAdminResponseDto } from './dto/job-source-admin-response.dto';
 import { JobSourceSyncResponseDto } from './dto/job-source-sync-response.dto';
@@ -69,17 +72,20 @@ export class AdminJobSourcesController {
 
   @Post('sync-active')
   @HttpCode(HttpStatus.OK)
+  @Throttle(ADMIN_SYNC_THROTTLE)
   @ApiOperation({
     summary:
       'Run ingest sync for all active job sources (sequential; continues after individual failures)',
   })
   @ApiOkResponse({ type: JobSourceBulkSyncResponseDto })
+  @ApiTooManyRequestsResponse({ description: 'Admin sync rate limit exceeded' })
   syncActive(): Promise<JobSourceBulkSyncResponseDto> {
     return this.jobIngestOrchestrationService.syncAllActiveJobSources();
   }
 
   @Post(':id/sync')
   @HttpCode(HttpStatus.OK)
+  @Throttle(ADMIN_SYNC_THROTTLE)
   @ApiOperation({
     summary:
       'Run ingest sync for one job source (synchronous; fetches ATS snapshot and upserts external jobs)',
@@ -90,6 +96,7 @@ export class AdminJobSourcesController {
     description:
       'ATS fetch or persist failed; source lastError* fields are updated',
   })
+  @ApiTooManyRequestsResponse({ description: 'Admin sync rate limit exceeded' })
   async sync(
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<JobSourceSyncResponseDto> {
@@ -100,6 +107,8 @@ export class AdminJobSourcesController {
       jobSourceId: id,
       upsertedCount: result.upsertedCount,
       skippedInvalid: result.skippedInvalid,
+      inactivatedCount: result.inactivatedCount,
+      durationMs: result.durationMs,
       syncedAt: result.syncedAt,
     };
   }

@@ -16,8 +16,14 @@ export class JobSourceBulkSyncItemResponseDto {
   @ApiPropertyOptional()
   skippedInvalid?: number;
 
+  @ApiPropertyOptional()
+  inactivatedCount?: number;
+
   @ApiPropertyOptional({ type: String, format: 'date-time' })
   syncedAt?: Date;
+
+  @ApiPropertyOptional()
+  durationMs?: number;
 
   @ApiPropertyOptional()
   errorMessage?: string;

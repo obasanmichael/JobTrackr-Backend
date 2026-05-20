@@ -56,7 +56,9 @@ describe('AdminJobSourcesController', () => {
       jobIngestOrchestrationService.syncExternalJobs.mockResolvedValueOnce({
         upsertedCount: 12,
         skippedInvalid: 1,
+        inactivatedCount: 4,
         syncedAt,
+        durationMs: 1500,
       });
 
       const result = await controller.sync(jobSourceId);
@@ -68,6 +70,8 @@ describe('AdminJobSourcesController', () => {
         jobSourceId,
         upsertedCount: 12,
         skippedInvalid: 1,
+        inactivatedCount: 4,
+        durationMs: 1500,
         syncedAt,
       });
     });

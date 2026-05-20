@@ -16,6 +16,17 @@ export class JobSourceSyncResponseDto {
   skippedInvalid!: number;
 
   @ApiProperty({
+    description:
+      'Previously active listings for this source that were missing from the latest snapshot and marked inactive.',
+  })
+  inactivatedCount!: number;
+
+  @ApiProperty({
+    description: 'Wall-clock duration of the sync run in milliseconds.',
+  })
+  durationMs!: number;
+
+  @ApiProperty({
     type: String,
     format: 'date-time',
     description: 'Timestamp recorded on the job source as lastSyncAt.',

@@ -9,6 +9,7 @@ import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { buildExternalJobUpsertArgs } from './normalization/generic-job-listing-to-prisma';
 import { parseGenericJobListing } from './normalization/generic-job-listing.schema';
+import { buildStaleExternalJobWhere } from './deactivate-stale-external-jobs';
 import type { JobSourceSyncPort } from './sync/job-source-sync.port';
 import { JOB_SOURCE_SYNC_PORT } from './sync/job-source-sync.tokens';
 
@@ -18,8 +19,20 @@ const MAX_HEALTH_MESSAGE = 3_900;
 export type JobIngestSyncResult = {
   upsertedCount: number;
   skippedInvalid: number;
+  inactivatedCount: number;
   /** Same timestamp written to JobSource.lastSyncAt / lastSuccessAt on success. */
   syncedAt: Date;
+  durationMs: number;
+};
+
+export type JobIngestSyncLogPayload = {
+  event: 'job_ingest_sync_complete' | 'job_ingest_sync_failed';
+  jobSourceId: string;
+  upsertedCount?: number;
+  skippedInvalid?: number;
+  inactivatedCount?: number;
+  durationMs: number;
+  errorMessage?: string;
 };
 
 export type JobSourceBulkSyncItemResult = {
@@ -28,7 +41,9 @@ export type JobSourceBulkSyncItemResult = {
   ok: boolean;
   upsertedCount?: number;
   skippedInvalid?: number;
+  inactivatedCount?: number;
   syncedAt?: Date;
+  durationMs?: number;
   errorMessage?: string;
 };
 
@@ -53,6 +68,7 @@ export class JobIngestOrchestrationService {
    * Phase D exposes this via admin HTTP; callers may catch {@link BadGatewayException} on failures.
    */
   async syncExternalJobs(jobSourceId: string): Promise<JobIngestSyncResult> {
+    const startedAt = Date.now();
     const sourceRow = await this.prisma.jobSource.findUnique({
       where: { id: jobSourceId },
     });
@@ -64,6 +80,8 @@ export class JobIngestOrchestrationService {
     const syncedAt = new Date();
     let upsertedCount = 0;
     let skippedInvalid = 0;
+    let inactivatedCount = 0;
+    const seenExternalJobIds: string[] = [];
 
     try {
       const snapshot = await this.syncPort.fetchSnapshot({
@@ -87,6 +105,7 @@ export class JobIngestOrchestrationService {
           skippedInvalid++;
           continue;
         }
+        seenExternalJobIds.push(normalized.value.externalJobId);
         upsertArgsList.push(
           buildExternalJobUpsertArgs(
             sourceRow.id,
@@ -109,11 +128,30 @@ export class JobIngestOrchestrationService {
         upsertedCount += chunk.length;
       }
 
+      const staleResult = await this.prisma.externalJob.updateMany({
+        where: buildStaleExternalJobWhere(sourceRow.id, seenExternalJobIds),
+        data: { isActive: false },
+      });
+      inactivatedCount = staleResult.count;
+
+      const durationMs = Date.now() - startedAt;
+
       if (skippedInvalid > 0) {
         this.logger.warn(
           `Ingest skipped ${skippedInvalid} invalid listing(s) for JobSource ${jobSourceId}`,
         );
       }
+
+      this.logger.log(
+        JSON.stringify({
+          event: 'job_ingest_sync_complete',
+          jobSourceId,
+          upsertedCount,
+          skippedInvalid,
+          inactivatedCount,
+          durationMs,
+        } satisfies JobIngestSyncLogPayload),
+      );
 
       await this.prisma.jobSource.update({
         where: { id: jobSourceId },
@@ -125,8 +163,15 @@ export class JobIngestOrchestrationService {
         },
       });
 
-      return { upsertedCount, skippedInvalid, syncedAt };
+      return {
+        upsertedCount,
+        skippedInvalid,
+        inactivatedCount,
+        syncedAt,
+        durationMs,
+      };
     } catch (error) {
+      const durationMs = Date.now() - startedAt;
       const message = JobIngestOrchestrationService.truncateErrorMessage(error);
 
       await this.prisma.jobSource.update({
@@ -139,7 +184,12 @@ export class JobIngestOrchestrationService {
       });
 
       this.logger.error(
-        `Job ingest failed for JobSource ${jobSourceId}: ${message}`,
+        JSON.stringify({
+          event: 'job_ingest_sync_failed',
+          jobSourceId,
+          durationMs,
+          errorMessage: message,
+        } satisfies JobIngestSyncLogPayload),
         error instanceof Error ? error.stack : undefined,
       );
 
@@ -177,7 +227,9 @@ export class JobIngestOrchestrationService {
           ok: true,
           upsertedCount: outcome.upsertedCount,
           skippedInvalid: outcome.skippedInvalid,
+          inactivatedCount: outcome.inactivatedCount,
           syncedAt: outcome.syncedAt,
+          durationMs: outcome.durationMs,
         });
       } catch (error) {
         const errorMessage =
