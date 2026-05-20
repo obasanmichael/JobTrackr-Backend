@@ -10,6 +10,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { HealthModule } from './health/health.module';
 import { InterviewsModule } from './interviews/interviews.module';
 import { JobSourcesModule } from './job-sources/job-sources.module';
+import { JobMatchingModule } from './job-matching/job-matching.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RemindersModule } from './reminders/reminders.module';
 import { JobsModule } from './jobs/jobs.module';
@@ -51,6 +52,7 @@ import { UsersModule } from './users/users.module';
     ResumesModule,
     ResumeReviewsModule,
     JobSourcesModule,
+    JobMatchingModule,
     JobsModule,
     ApplicationsModule,
     ApplicationEventsModule,

@@ -24,6 +24,7 @@ model User {
   candidateProfiles CandidateProfile[]
   resumeReviews     ResumeReview[]
   usageCounters     UsageCounter[]
+  jobMatchResults   JobMatchResult[]
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 }
@@ -73,6 +74,7 @@ model CandidateProfile {
   isConfirmed          Boolean   @default(false)
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
+  jobMatchResults      JobMatchResult[]
 
   @@index([userId])
 }
@@ -330,6 +332,7 @@ model ExternalJob {
   isActive        Boolean                     @default(true)
   createdAt       DateTime                    @default(now())
   updatedAt       DateTime                    @updatedAt
+  jobMatchResults JobMatchResult[]
 
   @@unique([sourceId, externalJobId])
   @@index([sourceId])
@@ -369,4 +372,31 @@ enum ExternalExperienceLevel {
   LEAD
   EXECUTIVE
   UNSPECIFIED
+}
+
+/// Cached heuristic match between a candidate profile and an external job (Phase M).
+model JobMatchResult {
+  id                 String           @id @default(uuid())
+  userId             String
+  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resumeId           String
+  candidateProfileId String
+  candidateProfile   CandidateProfile @relation(fields: [candidateProfileId], references: [id], onDelete: Cascade)
+  externalJobId      String
+  externalJob        ExternalJob      @relation(fields: [externalJobId], references: [id], onDelete: Cascade)
+  overallScore       Int
+  titleScore         Int
+  skillScore         Int
+  experienceScore    Int
+  locationScore      Int
+  recencyScore       Int
+  matchedSkills      Json?
+  missingSkills      Json?
+  matchReason        String
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  @@unique([userId, externalJobId])
+  @@index([userId, overallScore])
+  @@index([candidateProfileId])
 }

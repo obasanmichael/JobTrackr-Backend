@@ -313,6 +313,17 @@ missingSkills       # string[] (optional, top gaps only)
 
 **Exit:** User with a profile sees a ranked list with visible match reason; scores are deterministic and test-covered.
 
+### Phase M completion (implemented)
+
+- [x] **M.1** — **`JobMatchResult`** model + migration **`20260620120000_v2m_job_match_results`**; cached per `(userId, externalJobId)`.
+- [x] **M.2** — **`job-matching`** module: **`JobMatchingService`** loads latest confirmed **`CandidateProfile`** + active **`ExternalJob`** rows; heuristic scoring in **`job-match-scoring.ts`**.
+- [x] **M.3** — **`GET /api/v1/matches`** returns cached rows when fresh (≤24h), else recomputes; sorted by **`overallScore`** desc.
+- [x] **M.4** — **`POST /api/v1/matches/generate`** force refresh; throttled via **`MATCHES_GENERATE_THROTTLE_LIMIT`** (default **10/min**).
+- [x] **M.5** — **`GET /api/v1/jobs/:id/match`** on-demand score for job detail (route registered before **`/:id`**).
+- [x] **M.6** — Empty response with **`requiresProfile: true`** when no confirmed profile (mobile empty state: “Upload your resume first”).
+- [x] **M.7** — Unit tests for scoring + service; **`test/matches.e2e.test.ts`**.
+- [x] **M.8–M.10** (mobile) — **`MatchedJobsScreen`**, **`useMatchedJobsQuery`**, **`useGenerateMatchedJobsMutation`**, pull-to-refresh → generate; mapper unit test.
+
 **Later (post-MVP):** semantic similarity + AI explanation (PRD §8), `job_alert_preferences`, behavior signals (saved/applied/ignored).
 
 ---
@@ -420,12 +431,12 @@ Routing today:
 | E — Job Search API + FE | Done (API); FE filters optional | Medium |
 | G — Dedupe + stale | Done | Small–Medium |
 | H — Launch employer seed + ops | Done | Small (+ expand list over time) |
-| M — Matched Jobs MVP | Not started | Medium |
+| M — Matched Jobs MVP | Done (API + mobile) | Medium |
 | I — Careers page submissions | Not started | Medium |
 | J — Trust / quality jobs | Not started | Small |
 | K — Scale | Ongoing | Large |
 
-**Next actionable coding step:** **M** (Matched Jobs MVP).
+**Next actionable coding step:** **I** (careers page submissions) or **J** (trust / quality jobs).
 
 ---
 

@@ -5,11 +5,8 @@ import type { JobDetailDto } from './dto/job-detail.dto';
 import type { JobListingDto } from './dto/job-listing.dto';
 import type { JobSearchQueryDto } from './dto/job-search-query.dto';
 import type { JobSearchResponseDto } from './dto/job-search-response.dto';
-import {
-  buildJobExcerpt,
-  buildJobSearchWhere,
-  remoteTypeToWorkMode,
-} from './job-search.filters';
+import { mapExternalJobToListingDto } from './external-job.mapper';
+import { buildJobSearchWhere } from './job-search.filters';
 
 @Injectable()
 export class JobsService {
@@ -32,7 +29,7 @@ export class JobsService {
     ]);
 
     return {
-      jobs: rows.map((row) => JobsService.toListingDto(row)),
+      jobs: rows.map((row) => mapExternalJobToListingDto(row)),
       total,
       page,
       limit,
@@ -50,25 +47,12 @@ export class JobsService {
   }
 
   static toListingDto(row: ExternalJob): JobListingDto {
-    return {
-      id: row.id,
-      title: row.title,
-      companyName: row.company,
-      location: row.location,
-      workMode: remoteTypeToWorkMode(row.remoteType),
-      applyUrl: row.applicationUrl,
-      salaryMin: row.salaryMin,
-      salaryMax: row.salaryMax,
-      currency: row.currency,
-      source: row.sourceName,
-      postedAt: row.postedAt?.toISOString() ?? null,
-      excerpt: buildJobExcerpt(row.description),
-    };
+    return mapExternalJobToListingDto(row);
   }
 
   static toDetailDto(row: ExternalJob): JobDetailDto {
     return {
-      ...JobsService.toListingDto(row),
+      ...mapExternalJobToListingDto(row),
       description: row.description,
       requirements: row.requirements,
       experienceLevel: row.experienceLevel,
