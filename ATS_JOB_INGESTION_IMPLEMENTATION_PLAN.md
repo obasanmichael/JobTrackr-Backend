@@ -2,7 +2,7 @@
 
 **Scope:** Pull jobs from **employer ATS / official public APIs** (not generic aggregators like Indeed/LinkedIn), normalize into **`ExternalJob`**, expose search/detail in **`GET /jobs`**, rank jobs against **`CandidateProfile`** in **`GET /matches`**, keep **apply** as outbound links to employer-hosted pages. Aligns with PRD §5.3 (`job_sources`, `external_jobs`), §6.3–6.4 (jobs + matching), §8–9 (matching + aggregation), and existing **`JobSourceSyncPort`** (`src/job-sources/sync/`).
 
-**Out of scope (later phases elsewhere):** `saved_jobs`, convert-to-application (**V2D**), entitlement gating (**V2F**), hosted apply flows, realtime alerts delivery.
+**Out of scope (later phases elsewhere):** `saved_jobs` + convert-to-application — phased under **`V2D_SAVED_JOBS_IMPLEMENTATION_PLAN.md`**; entitlement gating (**V2F**); hosted apply flows; realtime alerts delivery.
 
 ---
 

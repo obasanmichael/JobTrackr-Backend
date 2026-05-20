@@ -26,6 +26,7 @@ model User {
   usageCounters     UsageCounter[]
   jobMatchResults   JobMatchResult[]
   jobSourceSubmissions JobSourceSubmission[]
+  savedJobs         SavedJob[]
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 }
@@ -102,6 +103,7 @@ model JobApplication {
   resumeReviews     ResumeReview[]
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
+  convertedFromSavedJobs SavedJob[]
 
   @@index([userId])
   @@index([status])
@@ -341,6 +343,7 @@ model ExternalJob {
   createdAt       DateTime                    @default(now())
   updatedAt       DateTime                    @updatedAt
   jobMatchResults JobMatchResult[]
+  savedJobs       SavedJob[]
 
   @@unique([sourceId, externalJobId])
   @@index([sourceId])
@@ -381,6 +384,33 @@ enum ExternalExperienceLevel {
   LEAD
   EXECUTIVE
   UNSPECIFIED
+}
+
+enum SavedJobStatus {
+  SAVED
+  DISMISSED
+  CONVERTED_TO_APPLICATION
+}
+
+/// User bookmarks a normalized ExternalJob listing (PRD §5.3 saved_jobs — V2D).
+model SavedJob {
+  id String @id @default(uuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// FK to `ExternalJob.id` (canonical listing UUID from `GET /jobs/:id`).
+  jobListingId String
+  listing ExternalJob @relation(fields: [jobListingId], references: [id], onDelete: Cascade)
+  status SavedJobStatus @default(SAVED)
+  notes String?
+  convertedApplicationId String?
+  convertedApplication JobApplication? @relation(fields: [convertedApplicationId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, jobListingId])
+  @@index([userId])
+  @@index([status, userId])
+  @@map("saved_jobs")
 }
 
 /// Cached heuristic match between a candidate profile and an external job (Phase M).

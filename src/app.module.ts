@@ -16,6 +16,7 @@ import { RemindersModule } from './reminders/reminders.module';
 import { JobsModule } from './jobs/jobs.module';
 import { ResumeReviewsModule } from './resume-reviews/resume-reviews.module';
 import { ResumesModule } from './resumes/resumes.module';
+import { SavedJobsModule } from './saved-jobs/saved-jobs.module';
 import { UsersModule } from './users/users.module';
 
 @Module({
@@ -54,6 +55,7 @@ import { UsersModule } from './users/users.module';
     JobSourcesModule,
     JobMatchingModule,
     JobsModule,
+    SavedJobsModule,
     ApplicationsModule,
     ApplicationEventsModule,
     RemindersModule,

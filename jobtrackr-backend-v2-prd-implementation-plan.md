@@ -92,17 +92,19 @@ V2 should add modules and endpoints while preserving:
 
 Do not implement all modules in one unstructured push.
 
-Recommended sequence:
+Recommended sequence (tracks are cumulative; naming matches **implementation phases** in this document):
 
 ```txt
-V2A: Resume intelligence foundation
-V2B: Job board aggregation
-V2C: AI matching and review
-V2D: Billing/beta entitlements
-V2E: Admin dashboard APIs
-V2F: Browser extension APIs
-V2G: Calendar sync
-V2H: Notifications/workers foundation
+V2A: Resume intelligence foundation (implemented under earlier roadmap)
+V2B: Candidate profile + related resume pipelines (see earlier sections)
+V2C: Job sources + normalized jobs + ingest/search (`job-sources`, `jobs`)
+V2D: Saved jobs + convert to JobApplication (`saved-jobs` → `applications` bridge)
+V2E: Job matching + job alerts (`job-matching`, alert prefs)
+V2F: Subscription/beta entitlements (`subscriptions`, `entitlements`)
+V2G: Admin dashboard APIs (`admin`)
+V2H: Browser extension APIs (`extension`)
+V2I: Calendar sync (calendar integrations)
+V2J: Notifications/workers foundation (`notifications`, `workers`)
 ```
 
 ---
@@ -353,6 +355,7 @@ userId
 externalJobId
 status
 notes
+convertedApplicationId  (optional implementation aid — FK to JobApplication; idempotency/navigation)
 createdAt
 updatedAt
 ```
@@ -1419,19 +1422,29 @@ Admin can inspect source status
 
 ## Phase V2D: Saved Jobs and Convert to Application
 
+**Detailed phased rollout:** **`V2D_SAVED_JOBS_IMPLEMENTATION_PLAN.md`** (`D.1` schema → `D.6` client integration).
+
 ### Goal
 
-Connect job discovery to existing tracker.
+Connect job discovery to the existing V1 **`JobApplication`** tracker using PRD **`saved_jobs`**.
 
-### Backend tasks
+### Sub-phases (summary)
 
-1. Create `saved-jobs` module
-2. Add saved jobs schema
-3. Add save/unsave endpoints
-4. Add convert-to-application endpoint
-5. Ensure converted application uses V1 application module
-6. Add timeline event on conversion
-7. Add tests
+| Sub-phase | Focus |
+|-----------|--------|
+| **D.1** | Prisma **`saved_jobs`** + enums + FK to **`ExternalJob`**; **`@@unique([userId, externalJobId])`** |
+| **D.2** | **`saved-jobs`** Nest module: save / list / delete (optional PATCH notes / dismiss) |
+| **D.3** | **`POST …/saved-jobs/:id/convert-to-application`** → **`ApplicationsService.create`** with field mapping |
+| **D.4** | **`CONVERTED_TO_APPLICATION`** status, idempotent convert, timeline **`GENERAL_UPDATE`** (or **`NOTE`**) via **`application-events`** |
+| **D.5** | **`saved-jobs/SAVED_JOBS_CONTRACT.md`**, E2E & edge cases (inactive / suspicious listings, duplicates) |
+| **D.6** | Web/mobile migrate off local-only saved-job IDs; **`ExternalJob.id`** is the canonical save target |
+
+### Backend tasks (rollup)
+
+1. Create **`saved-jobs`** module (`D.2`) after schema migration (**`D.1`**): save/list/delete (**`POST/GET/DELETE /api/v1/saved-jobs`**).
+2. Add **convert-to-application** (**`POST /api/v1/saved-jobs/:id/convert-to-application`**) delegated to **`ApplicationsService`** (**`D.3`**).
+3. Update **`SavedJob`** status and append application timeline (**`D.4`**).
+4. Contract parity with **`APPLICATIONS_CONTRACT.md`** (no client `userId`); automated tests (**`D.5`**).
 
 ### Acceptance criteria
 
@@ -1441,6 +1454,8 @@ User can view saved jobs
 User can convert saved job to application
 Converted application appears in V1 application tracker
 Ownership checks are enforced
+Duplicate saves are handled idempotently or return a safe client response
+Timeline reflects conversion origin
 ```
 
 ---
