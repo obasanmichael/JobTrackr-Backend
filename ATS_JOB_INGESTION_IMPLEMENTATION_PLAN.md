@@ -345,6 +345,7 @@ missingSkills       # string[] (optional, top gaps only)
 - [x] **I.2** — **`parseAtsCareersUrl`** auto-detects Greenhouse, Lever, and Ashby slugs from careers URLs.
 - [x] **I.3** — Admin queue: **`GET /api/v1/admin/job-source-submissions`**, **`POST …/:id/approve`** creates/updates **`JobSource`** + first sync when ingest is supported.
 - [x] **I.4** — **`POST …/:id/reject`** and **`POST …/:id/spam`**; throttled public submit via **`JOB_SOURCE_SUBMISSIONS_THROTTLE_LIMIT`**; duplicate pending URL → **409**.
+- [x] **I.5** (web + mobile) — Submit form at **`/dashboard/jobs/submit`** (web) and **More → Submit careers page** (mobile); POST wired with success/409 handling and ATS detection feedback.
 
 ---
 
@@ -439,7 +440,7 @@ Routing today:
 | G — Dedupe + stale | Done | Small–Medium |
 | H — Launch employer seed + ops | Done | Small (+ expand list over time) |
 | M — Matched Jobs MVP | Done (API + mobile) | Medium |
-| I — Careers page submissions | Done | Medium |
+| I — Careers page submissions | Done (API + web + mobile submit) | Medium |
 | J — Trust / quality jobs | Not started | Small |
 | K — Scale | Ongoing | Large |
 
