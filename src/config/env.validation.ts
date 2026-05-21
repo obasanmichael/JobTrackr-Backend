@@ -27,6 +27,11 @@ type EnvVars = {
   STRIPE_WEBHOOK_SECRET?: string;
   STRIPE_PRICE_PRO_MONTHLY?: string;
   STRIPE_PRICE_PREMIUM_MONTHLY?: string;
+  R2_ACCOUNT_ID?: string;
+  R2_ACCESS_KEY_ID?: string;
+  R2_SECRET_ACCESS_KEY?: string;
+  R2_BUCKET_NAME?: string;
+  R2_PUBLIC_URL?: string;
 };
 
 const ALLOWED_NODE_ENVS: NodeEnv[] = ['development', 'test', 'production'];
@@ -201,6 +206,32 @@ export function validateEnv(config: EnvVars): EnvVars {
       }
     } catch {
       errors.push('FRONTEND_URL must be a valid URL when set.');
+    }
+  }
+
+  const r2Vars = [
+    'R2_ACCOUNT_ID',
+    'R2_ACCESS_KEY_ID',
+    'R2_SECRET_ACCESS_KEY',
+    'R2_BUCKET_NAME',
+    'R2_PUBLIC_URL',
+  ] as const;
+  const r2Configured = r2Vars.some((key) => config[key]?.trim());
+  if (r2Configured) {
+    for (const key of r2Vars) {
+      if (!config[key]?.trim()) {
+        errors.push(`${key} is required when R2 avatar storage is configured.`);
+      }
+    }
+    if (config.R2_PUBLIC_URL?.trim()) {
+      try {
+        const url = new URL(config.R2_PUBLIC_URL.trim());
+        if (!['http:', 'https:'].includes(url.protocol)) {
+          errors.push('R2_PUBLIC_URL must use http or https.');
+        }
+      } catch {
+        errors.push('R2_PUBLIC_URL must be a valid URL.');
+      }
     }
   }
 

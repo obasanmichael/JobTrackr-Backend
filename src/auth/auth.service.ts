@@ -16,6 +16,7 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import type { CurrentUser } from '../common/types/current-user.type';
 import { UserProfileDto } from '../users/dto/user-profile.dto';
+import { toUserProfileDto } from '../users/user-profile.mapper';
 import { getAuthConfig, type AuthConfig } from './auth.config';
 import type { JwtPayload } from './types/jwt-payload.type';
 
@@ -28,7 +29,7 @@ export class AuthService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly jwtService: JwtService,
-    configService: ConfigService,
+    private readonly configService: ConfigService,
     private readonly subscriptionProvisioning: SubscriptionProvisioningService,
   ) {
     this.authConfig = getAuthConfig(configService);
@@ -120,12 +121,6 @@ export class AuthService {
   }
 
   private toUserProfile(user: User): UserProfileDto {
-    return {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-    };
+    return toUserProfileDto(user, this.configService);
   }
 }

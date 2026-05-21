@@ -15,4 +15,11 @@ export class UserProfileDto {
 
   @ApiProperty({ type: String, format: 'date-time' })
   updatedAt!: Date;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'Public CDN URL for the user avatar, if set.',
+  })
+  avatarUrl!: string | null;
 }
