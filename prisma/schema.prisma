@@ -33,6 +33,8 @@ model User {
   adminMembership   AdminMembership?   @relation("AdminMembershipSubject")
   /// Admin memberships this user invited (optional audit linkage).
   adminInvites      AdminMembership[]  @relation("AdminMembershipInvite")
+  auditLogsAsActor  AuditLog[]         @relation("AuditLogActor")
+  auditLogsAsTarget AuditLog[]         @relation("AuditLogTarget")
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 }
@@ -62,6 +64,27 @@ model AdminMembership {
   updatedAt     DateTime                 @updatedAt
 
   @@map("admin_memberships")
+}
+
+/// Append-only audit trail for admin actions (V2G).
+model AuditLog {
+  id           String   @id @default(uuid())
+  /// Nullable so rows survive rare actor user hard-deletes (`ON DELETE SET NULL`).
+  actorUserId  String?
+  actorUser    User?    @relation("AuditLogActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  targetUserId String?
+  targetUser   User?    @relation("AuditLogTarget", fields: [targetUserId], references: [id], onDelete: SetNull)
+  action       String
+  resourceType String
+  resourceId   String?
+  metadata     Json?
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+
+  @@index([actorUserId, createdAt])
+  @@index([targetUserId, createdAt])
+  @@map("audit_logs")
 }
 
 model Resume {

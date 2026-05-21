@@ -1,4 +1,4 @@
-# Phase V2G — G1 & G2 (admin persistence + guard)
+# Phase V2G — Admin access (G1–G4 foundations)
 
 ## Database
 
@@ -7,6 +7,8 @@ Run migrations (local or deploy):
 ```bash
 npx prisma migrate deploy
 ```
+
+Migrations add `admin_memberships` and `audit_logs`.
 
 ## Granting admin (DB)
 
@@ -26,3 +28,15 @@ Roles: `OWNER`, `ADMIN`, `SUPPORT`, `ANALYST` (prefer `ADMIN` until you need `OW
 ## Guards
 
 Public admin APIs must remain behind **`JwtAuthGuard` immediately followed by `AdminGuard`**. Do not mount admin controllers with JWT only.
+
+## G3 — Audit log
+
+Privileged writes should call `AuditLogService.record()` (exported from `AdminModule`) with actor, optional target, action, resource type/id, JSON `metadata`, and client `ipAddress` / `userAgent` when available. `PATCH /admin/users/:id` records `user.update_display_name`.
+
+## G4 — User admin HTTP API
+
+All require a valid access token and pass `AdminGuard`:
+
+- **`GET /api/v1/admin/users`** — query: `page`, `limit`, optional `search` (email or name, case-insensitive).
+- **`GET /api/v1/admin/users/:id`** — profile + subscription snapshot (plan code/name when present).
+- **`PATCH /api/v1/admin/users/:id`** — body `{ "name": "..." }`; writes an audit row with previous and new name.

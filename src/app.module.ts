@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { seconds, ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { AdminModule } from './admin/admin.module';
 import { ApplicationEventsModule } from './application-events/application-events.module';
 import { ApplicationsModule } from './applications/applications.module';
 import { AuthModule } from './auth/auth.module';
@@ -48,6 +49,7 @@ import { UsersModule } from './users/users.module';
       },
     }),
     PrismaModule,
+    AdminModule,
     BillingModule,
     HealthModule,
     AuthModule,
