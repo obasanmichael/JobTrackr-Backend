@@ -1,0 +1,25 @@
+/** Feature entitlement keys — aligned with PRD §5.5 and seed migration. */
+export const FEATURE_AI_RESUME_REVIEW = 'AI_RESUME_REVIEW';
+export const FEATURE_JOB_MATCHING = 'JOB_MATCHING';
+export const FEATURE_JOB_ALERTS = 'JOB_ALERTS';
+export const FEATURE_RESUME_UPLOADS = 'RESUME_UPLOADS';
+export const FEATURE_SAVED_JOBS = 'SAVED_JOBS';
+export const FEATURE_CALENDAR_SYNC = 'CALENDAR_SYNC';
+export const FEATURE_BROWSER_EXTENSION = 'BROWSER_EXTENSION';
+
+export const ALL_FEATURE_KEYS = [
+  FEATURE_AI_RESUME_REVIEW,
+  FEATURE_JOB_MATCHING,
+  FEATURE_JOB_ALERTS,
+  FEATURE_RESUME_UPLOADS,
+  FEATURE_SAVED_JOBS,
+  FEATURE_CALENDAR_SYNC,
+  FEATURE_BROWSER_EXTENSION,
+] as const;
+
+export type FeatureKey = (typeof ALL_FEATURE_KEYS)[number];
+
+export const PLAN_CODE_BETA_FREE = 'BETA_FREE';
+export const PLAN_CODE_FREE = 'FREE';
+export const PLAN_CODE_PRO = 'PRO';
+export const PLAN_CODE_PREMIUM = 'PREMIUM';

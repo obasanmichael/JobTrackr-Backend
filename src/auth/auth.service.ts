@@ -9,6 +9,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import type { User } from '@prisma/client';
 import type { SignOptions } from 'jsonwebtoken';
+import { SubscriptionProvisioningService } from '../billing/subscription-provisioning.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthResponseDto } from './dto/auth-response.dto';
 import { LoginDto } from './dto/login.dto';
@@ -28,6 +29,7 @@ export class AuthService {
     private readonly prismaService: PrismaService,
     private readonly jwtService: JwtService,
     configService: ConfigService,
+    private readonly subscriptionProvisioning: SubscriptionProvisioningService,
   ) {
     this.authConfig = getAuthConfig(configService);
   }
@@ -48,6 +50,8 @@ export class AuthService {
         passwordHash,
       },
     });
+
+    await this.subscriptionProvisioning.ensureBetaSubscription(createdUser.id);
 
     return this.buildAuthResponse(createdUser);
   }

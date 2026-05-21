@@ -14,6 +14,7 @@ describe('AuthService', () => {
     signAsync: jest.Mock;
   };
   let configService: ConfigService;
+  let subscriptionProvisioning: { ensureBetaSubscription: jest.Mock };
 
   beforeEach(() => {
     prismaService = {
@@ -38,10 +39,15 @@ describe('AuthService', () => {
       }),
     } as unknown as ConfigService;
 
+    subscriptionProvisioning = {
+      ensureBetaSubscription: jest.fn().mockResolvedValue(undefined),
+    };
+
     service = new AuthService(
       prismaService as never,
       jwtService as unknown as JwtService,
       configService,
+      subscriptionProvisioning as never,
     );
   });
 
@@ -65,6 +71,9 @@ describe('AuthService', () => {
 
       expect(response.accessToken).toBe('signed-jwt-token');
       expect(response.user.email).toBe('test@example.com');
+      expect(subscriptionProvisioning.ensureBetaSubscription).toHaveBeenCalledWith(
+        'user-1',
+      );
       expect(
         (response.user as Record<string, unknown>).passwordHash,
       ).toBeUndefined();

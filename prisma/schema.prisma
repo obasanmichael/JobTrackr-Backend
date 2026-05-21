@@ -28,6 +28,7 @@ model User {
   jobSourceSubmissions JobSourceSubmission[]
   savedJobs         SavedJob[]
   matchAlertPreference MatchAlertPreference?
+  subscription      Subscription?
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 }
@@ -463,6 +464,82 @@ model MatchAlertPreference {
   updatedAt DateTime @updatedAt
 
   @@map("match_alert_preferences")
+}
+
+/// Product catalog (V2F).
+model Plan {
+  id             String   @id @default(uuid())
+  code           String   @unique
+  name           String
+  description    String?
+  /// Stored in minor currency units (e.g. cents); null for free tiers.
+  priceMonthly   Int?
+  currency       String   @default("usd")
+  stripePriceId  String?  @unique
+  isActive       Boolean  @default(true)
+  isBeta         Boolean  @default(false)
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  subscriptions         Subscription[]
+  featureEntitlements   FeatureEntitlement[]
+
+  @@map("plans")
+}
+
+model FeatureEntitlement {
+  id         String   @id @default(uuid())
+  planId     String
+  plan       Plan     @relation(fields: [planId], references: [id], onDelete: Cascade)
+  featureKey String
+  /// Monthly-style quotas when applicable; null = unlimited / not quota-based.
+  limitValue Int?
+  isEnabled  Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([planId, featureKey])
+  @@index([planId])
+  @@map("feature_entitlements")
+}
+
+model Subscription {
+  id                   String             @id @default(uuid())
+  userId               String             @unique
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId               String
+  plan                 Plan               @relation(fields: [planId], references: [id], onDelete: Restrict)
+  status               SubscriptionStatus @default(BETA)
+  provider             BillingProvider    @default(NONE)
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  betaStartedAt        DateTime?
+  betaEndsAt           DateTime?
+  trialEndsAt          DateTime?
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  cancelAt             DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  @@index([stripeCustomerId])
+  @@index([stripeSubscriptionId])
+  @@map("subscriptions")
+}
+
+enum BillingProvider {
+  NONE
+  STRIPE
+}
+
+enum SubscriptionStatus {
+  BETA
+  ACTIVE
+  TRIALING
+  PAST_DUE
+  CANCELLED
+  EXPIRED
 }
 
 enum JobSourceSubmissionStatus {

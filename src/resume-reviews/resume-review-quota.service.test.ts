@@ -1,43 +1,58 @@
 import { ResumeReviewQuotaService } from './resume-review-quota.service';
 
 describe('ResumeReviewQuotaService.resolveMonthlySuccessLimit', () => {
-  it('treats blank, -1, and unlimited as unlimited', () => {
+  it('honours entitlement limit when set (numeric)', () => {
     expect(
-      ResumeReviewQuotaService.resolveMonthlySuccessLimit(undefined),
+      ResumeReviewQuotaService.resolveMonthlySuccessLimit('-1', 3),
+    ).toBe(3);
+    expect(
+      ResumeReviewQuotaService.resolveMonthlySuccessLimit(undefined, 0),
+    ).toBe(0);
+  });
+
+  it('treats blank, -1, and unlimited env as unlimited when entitlement not set', () => {
+    expect(
+      ResumeReviewQuotaService.resolveMonthlySuccessLimit(undefined, undefined),
     ).toBeNull();
-    expect(ResumeReviewQuotaService.resolveMonthlySuccessLimit('')).toBeNull();
     expect(
-      ResumeReviewQuotaService.resolveMonthlySuccessLimit('   '),
+      ResumeReviewQuotaService.resolveMonthlySuccessLimit('', undefined),
     ).toBeNull();
     expect(
-      ResumeReviewQuotaService.resolveMonthlySuccessLimit('-1'),
+      ResumeReviewQuotaService.resolveMonthlySuccessLimit('   ', undefined),
     ).toBeNull();
     expect(
-      ResumeReviewQuotaService.resolveMonthlySuccessLimit('unlimited'),
+      ResumeReviewQuotaService.resolveMonthlySuccessLimit('-1', undefined),
     ).toBeNull();
     expect(
-      ResumeReviewQuotaService.resolveMonthlySuccessLimit('UnLimited'),
+      ResumeReviewQuotaService.resolveMonthlySuccessLimit('unlimited', undefined),
+    ).toBeNull();
+    expect(
+      ResumeReviewQuotaService.resolveMonthlySuccessLimit('UnLimited', undefined),
     ).toBeNull();
   });
 
-  it('parses positive digit strings', () => {
-    expect(ResumeReviewQuotaService.resolveMonthlySuccessLimit('1')).toBe(1);
-    expect(ResumeReviewQuotaService.resolveMonthlySuccessLimit('42')).toBe(42);
+  it('parses positive digit strings when entitlement unset', () => {
+    expect(ResumeReviewQuotaService.resolveMonthlySuccessLimit('1', undefined)).toBe(
+      1,
+    );
+    expect(
+      ResumeReviewQuotaService.resolveMonthlySuccessLimit('42', undefined),
+    ).toBe(42);
   });
 
-  it('returns null for invalid values', () => {
-    expect(ResumeReviewQuotaService.resolveMonthlySuccessLimit('0')).toBeNull();
+  it('returns null for invalid env values when entitlement unset', () => {
+    expect(ResumeReviewQuotaService.resolveMonthlySuccessLimit('0', undefined)).toBeNull();
     expect(
-      ResumeReviewQuotaService.resolveMonthlySuccessLimit('01'),
+      ResumeReviewQuotaService.resolveMonthlySuccessLimit('01', undefined),
     ).toBeNull();
     expect(
-      ResumeReviewQuotaService.resolveMonthlySuccessLimit('-2'),
+      ResumeReviewQuotaService.resolveMonthlySuccessLimit('-2', undefined),
     ).toBeNull();
     expect(
-      ResumeReviewQuotaService.resolveMonthlySuccessLimit('3.5'),
+      ResumeReviewQuotaService.resolveMonthlySuccessLimit('3.5', undefined),
     ).toBeNull();
     expect(
-      ResumeReviewQuotaService.resolveMonthlySuccessLimit('abc'),
+      ResumeReviewQuotaService.resolveMonthlySuccessLimit('abc', undefined),
     ).toBeNull();
   });
 });

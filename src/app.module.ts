@@ -5,6 +5,7 @@ import { seconds, ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ApplicationEventsModule } from './application-events/application-events.module';
 import { ApplicationsModule } from './applications/applications.module';
 import { AuthModule } from './auth/auth.module';
+import { BillingModule } from './billing/billing.module';
 import { validateEnv } from './config/env.validation';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { HealthModule } from './health/health.module';
@@ -47,6 +48,7 @@ import { UsersModule } from './users/users.module';
       },
     }),
     PrismaModule,
+    BillingModule,
     HealthModule,
     AuthModule,
     UsersModule,

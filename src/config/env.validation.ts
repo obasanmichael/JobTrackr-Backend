@@ -21,6 +21,12 @@ type EnvVars = {
   JWT_AUDIENCE?: string;
   /** Comma-separated user UUIDs allowed to access /api/v1/admin/* routes (temporary until Phase V2G roles). */
   ADMIN_USER_IDS?: string;
+  /** Web app URL for Stripe Checkout return URLs (`/dashboard/billing` fallback if unset). */
+  FRONTEND_URL?: string;
+  STRIPE_SECRET_KEY?: string;
+  STRIPE_WEBHOOK_SECRET?: string;
+  STRIPE_PRICE_PRO_MONTHLY?: string;
+  STRIPE_PRICE_PREMIUM_MONTHLY?: string;
 };
 
 const ALLOWED_NODE_ENVS: NodeEnv[] = ['development', 'test', 'production'];
@@ -184,6 +190,17 @@ export function validateEnv(config: EnvVars): EnvVars {
       errors.push(
         'ADMIN_USER_IDS must be a comma-separated list of UUID strings.',
       );
+    }
+  }
+
+  if (config.FRONTEND_URL?.trim()) {
+    try {
+      const url = new URL(config.FRONTEND_URL.trim());
+      if (!['http:', 'https:'].includes(url.protocol)) {
+        errors.push('FRONTEND_URL must use http or https.');
+      }
+    } catch {
+      errors.push('FRONTEND_URL must be a valid URL when set.');
     }
   }
 
