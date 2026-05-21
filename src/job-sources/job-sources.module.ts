@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AdminModule } from '../admin/admin.module';
 import { AuthModule } from '../auth/auth.module';
 import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 import { AdminGuard } from '../common/guards/admin.guard';
@@ -17,7 +18,7 @@ import { RegistryJobSourceSyncProvider } from './sync/registry-job-source-sync.p
 import { JOB_SOURCE_SYNC_PORT } from './sync/job-source-sync.tokens';
 
 @Module({
-  imports: [AuthModule],
+  imports: [AuthModule, AdminModule],
   controllers: [
     AdminJobSourcesController,
     AdminJobQualityController,

@@ -1,7 +1,10 @@
 import { BadGatewayException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import type { Request } from 'express';
+import { AuditLogService } from '../admin/audit-log.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdminGuard } from '../common/guards/admin.guard';
+import type { CurrentUser } from '../common/types/current-user.type';
 import { AdminJobSourcesController } from './admin-job-sources.controller';
 import { JobIngestOrchestrationService } from './job-ingest-orchestration.service';
 import { JobSourcesService } from './job-sources.service';
@@ -17,6 +20,13 @@ describe('AdminJobSourcesController', () => {
     syncExternalJobs: jest.Mock;
     syncAllActiveJobSources: jest.Mock;
   };
+  let auditLog: { record: jest.Mock };
+
+  const actor: CurrentUser = {
+    userId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    email: 'admin@example.com',
+  };
+  const mockReq = { ip: '127.0.0.1', headers: {} } as Request;
 
   const jobSourceId = '11111111-1111-1111-8111-111111111111';
 
@@ -30,6 +40,7 @@ describe('AdminJobSourcesController', () => {
       syncExternalJobs: jest.fn(),
       syncAllActiveJobSources: jest.fn(),
     };
+    auditLog = { record: jest.fn().mockResolvedValue(undefined) };
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AdminJobSourcesController],
@@ -39,6 +50,7 @@ describe('AdminJobSourcesController', () => {
           provide: JobIngestOrchestrationService,
           useValue: jobIngestOrchestrationService,
         },
+        { provide: AuditLogService, useValue: auditLog },
       ],
     })
       .overrideGuard(JwtAuthGuard)
@@ -61,7 +73,7 @@ describe('AdminJobSourcesController', () => {
         durationMs: 1500,
       });
 
-      const result = await controller.sync(jobSourceId);
+      const result = await controller.sync(actor, jobSourceId, mockReq);
 
       expect(
         jobIngestOrchestrationService.syncExternalJobs,
@@ -74,6 +86,7 @@ describe('AdminJobSourcesController', () => {
         durationMs: 1500,
         syncedAt,
       });
+      expect(auditLog.record).toHaveBeenCalled();
     });
 
     it('propagates NotFoundException from orchestration', async () => {
@@ -81,9 +94,9 @@ describe('AdminJobSourcesController', () => {
         new NotFoundException('Job source not found'),
       );
 
-      await expect(controller.sync(jobSourceId)).rejects.toBeInstanceOf(
-        NotFoundException,
-      );
+      await expect(
+        controller.sync(actor, jobSourceId, mockReq),
+      ).rejects.toBeInstanceOf(NotFoundException);
     });
 
     it('propagates BadGatewayException when ingest fails', async () => {
@@ -91,9 +104,9 @@ describe('AdminJobSourcesController', () => {
         new BadGatewayException('network down'),
       );
 
-      await expect(controller.sync(jobSourceId)).rejects.toBeInstanceOf(
-        BadGatewayException,
-      );
+      await expect(
+        controller.sync(actor, jobSourceId, mockReq),
+      ).rejects.toBeInstanceOf(BadGatewayException);
     });
   });
 
@@ -123,13 +136,14 @@ describe('AdminJobSourcesController', () => {
           ],
         });
 
-      const result = await controller.syncActive();
+      const result = await controller.syncActive(actor, mockReq);
 
       expect(
         jobIngestOrchestrationService.syncAllActiveJobSources,
       ).toHaveBeenCalled();
       expect(result.attempted).toBe(2);
       expect(result.failed).toBe(1);
+      expect(auditLog.record).toHaveBeenCalled();
     });
   });
 });

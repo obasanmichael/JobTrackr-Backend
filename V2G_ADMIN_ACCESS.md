@@ -1,4 +1,4 @@
-# Phase V2G — Admin access (G1–G4 foundations)
+# Phase V2G — Admin access (G1–G7 foundations)
 
 ## Database
 
@@ -40,3 +40,18 @@ All require a valid access token and pass `AdminGuard`:
 - **`GET /api/v1/admin/users`** — query: `page`, `limit`, optional `search` (email or name, case-insensitive).
 - **`GET /api/v1/admin/users/:id`** — profile + subscription snapshot (plan code/name when present).
 - **`PATCH /api/v1/admin/users/:id`** — body `{ "name": "..." }`; writes an audit row with previous and new name.
+
+## G5 — Subscription admin API
+
+- **`GET /api/v1/admin/subscriptions`** — paginated list with subscriber email/name and plan; query `page`, `limit`, optional `search`.
+- **`PATCH /api/v1/admin/subscriptions/:userId`** — body `{ "planCode"?: string, "status"?: SubscriptionStatus }` (at least one field). If the user has no subscription row yet, **`planCode` is required** to create one. Audited as `subscription.override`.
+
+## G6 — Audit on job-source admin mutations
+
+`JobSourcesModule` imports `AdminModule` for `AuditLogService`. Mutating admin routes (job-source create/update/sync, bulk sync-active, job-quality scan/purge, submission approve/reject/spam) append **audit log** entries with summarized metadata.
+
+## G7 — Admin team API
+
+- **`GET /api/v1/admin/team`** — list all `admin_memberships` with user email/name (any active admin via `AdminGuard`).
+- **`POST /api/v1/admin/team`** — body `{ "userId", "role" }`; **`AdminRolesGuard`** allows only **`OWNER`** and **`ADMIN`**. Only **`OWNER`** may assign **`OWNER`**.
+- **`PATCH /api/v1/admin/team/:id`** — update membership `role` and/or `status` (e.g. set `REVOKED`); same role gate; audited.

@@ -8,8 +8,10 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Req,
   UseGuards,
 } from '@nestjs/common';
+import type { Request } from 'express';
 import {
   ApiBadGatewayResponse,
   ApiBearerAuth,
@@ -21,7 +23,18 @@ import {
   ApiTooManyRequestsResponse,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import { AuditLogService } from '../admin/audit-log.service';
+import {
+  ADMIN_AUDIT_ACTION_JOB_SOURCE_CREATE,
+  ADMIN_AUDIT_ACTION_JOB_SOURCE_SYNC,
+  ADMIN_AUDIT_ACTION_JOB_SOURCE_SYNC_ACTIVE,
+  ADMIN_AUDIT_ACTION_JOB_SOURCE_UPDATE,
+  ADMIN_AUDIT_RESOURCE_JOB_SOURCE,
+} from '../admin/admin.constants';
+import { clientRequestMeta } from '../admin/client-request-meta';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CurrentUserDecorator } from '../common/decorators/current-user.decorator';
+import type { CurrentUser } from '../common/types/current-user.type';
 import { AdminGuard } from '../common/guards/admin.guard';
 import { ADMIN_SYNC_THROTTLE } from './admin-sync-throttle';
 import { CreateJobSourceAdminDto } from './dto/create-job-source-admin.dto';
@@ -40,6 +53,7 @@ export class AdminJobSourcesController {
   constructor(
     private readonly jobSourcesService: JobSourcesService,
     private readonly jobIngestOrchestrationService: JobIngestOrchestrationService,
+    private readonly auditLog: AuditLogService,
   ) {}
 
   @Get()
@@ -52,10 +66,23 @@ export class AdminJobSourcesController {
   @Post()
   @ApiOperation({ summary: 'Create a job source (ATS board / provider row)' })
   @ApiCreatedResponse({ type: JobSourceAdminResponseDto })
-  create(
+  async create(
+    @CurrentUserDecorator() actor: CurrentUser,
     @Body() dto: CreateJobSourceAdminDto,
+    @Req() req: Request,
   ): Promise<JobSourceAdminResponseDto> {
-    return this.jobSourcesService.createForAdmin(dto);
+    const result = await this.jobSourcesService.createForAdmin(dto);
+    const meta = clientRequestMeta(req);
+    await this.auditLog.record({
+      actorUserId: actor.userId,
+      action: ADMIN_AUDIT_ACTION_JOB_SOURCE_CREATE,
+      resourceType: ADMIN_AUDIT_RESOURCE_JOB_SOURCE,
+      resourceId: result.id,
+      metadata: { name: result.name, type: result.type },
+      ipAddress: meta.ipAddress,
+      userAgent: meta.userAgent,
+    });
+    return result;
   }
 
   @Patch(':id')
@@ -63,11 +90,24 @@ export class AdminJobSourcesController {
     summary: 'Update a job source (partial; null config clears)',
   })
   @ApiOkResponse({ type: JobSourceAdminResponseDto })
-  update(
+  async update(
+    @CurrentUserDecorator() actor: CurrentUser,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateJobSourceAdminDto,
+    @Req() req: Request,
   ): Promise<JobSourceAdminResponseDto> {
-    return this.jobSourcesService.updateForAdmin(id, dto);
+    const result = await this.jobSourcesService.updateForAdmin(id, dto);
+    const meta = clientRequestMeta(req);
+    await this.auditLog.record({
+      actorUserId: actor.userId,
+      action: ADMIN_AUDIT_ACTION_JOB_SOURCE_UPDATE,
+      resourceType: ADMIN_AUDIT_RESOURCE_JOB_SOURCE,
+      resourceId: id,
+      metadata: { patchKeys: Object.keys(dto) },
+      ipAddress: meta.ipAddress,
+      userAgent: meta.userAgent,
+    });
+    return result;
   }
 
   @Post('sync-active')
@@ -79,8 +119,27 @@ export class AdminJobSourcesController {
   })
   @ApiOkResponse({ type: JobSourceBulkSyncResponseDto })
   @ApiTooManyRequestsResponse({ description: 'Admin sync rate limit exceeded' })
-  syncActive(): Promise<JobSourceBulkSyncResponseDto> {
-    return this.jobIngestOrchestrationService.syncAllActiveJobSources();
+  async syncActive(
+    @CurrentUserDecorator() actor: CurrentUser,
+    @Req() req: Request,
+  ): Promise<JobSourceBulkSyncResponseDto> {
+    const result =
+      await this.jobIngestOrchestrationService.syncAllActiveJobSources();
+    const meta = clientRequestMeta(req);
+    await this.auditLog.record({
+      actorUserId: actor.userId,
+      action: ADMIN_AUDIT_ACTION_JOB_SOURCE_SYNC_ACTIVE,
+      resourceType: ADMIN_AUDIT_RESOURCE_JOB_SOURCE,
+      resourceId: 'sync-active',
+      metadata: {
+        attempted: result.attempted,
+        succeeded: result.succeeded,
+        failed: result.failed,
+      },
+      ipAddress: meta.ipAddress,
+      userAgent: meta.userAgent,
+    });
+    return result;
   }
 
   @Post(':id/sync')
@@ -98,18 +157,38 @@ export class AdminJobSourcesController {
   })
   @ApiTooManyRequestsResponse({ description: 'Admin sync rate limit exceeded' })
   async sync(
+    @CurrentUserDecorator() actor: CurrentUser,
     @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: Request,
   ): Promise<JobSourceSyncResponseDto> {
-    const result =
+    const syncResult =
       await this.jobIngestOrchestrationService.syncExternalJobs(id);
 
-    return {
+    const body = {
       jobSourceId: id,
-      upsertedCount: result.upsertedCount,
-      skippedInvalid: result.skippedInvalid,
-      inactivatedCount: result.inactivatedCount,
-      durationMs: result.durationMs,
-      syncedAt: result.syncedAt,
+      upsertedCount: syncResult.upsertedCount,
+      skippedInvalid: syncResult.skippedInvalid,
+      inactivatedCount: syncResult.inactivatedCount,
+      durationMs: syncResult.durationMs,
+      syncedAt: syncResult.syncedAt,
     };
+
+    const meta = clientRequestMeta(req);
+    await this.auditLog.record({
+      actorUserId: actor.userId,
+      action: ADMIN_AUDIT_ACTION_JOB_SOURCE_SYNC,
+      resourceType: ADMIN_AUDIT_RESOURCE_JOB_SOURCE,
+      resourceId: id,
+      metadata: {
+        upsertedCount: syncResult.upsertedCount,
+        skippedInvalid: syncResult.skippedInvalid,
+        inactivatedCount: syncResult.inactivatedCount,
+        durationMs: syncResult.durationMs,
+      },
+      ipAddress: meta.ipAddress,
+      userAgent: meta.userAgent,
+    });
+
+    return body;
   }
 }

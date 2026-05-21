@@ -8,8 +8,11 @@ import {
   ParseUUIDPipe,
   Post,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
+import type { Request } from 'express';
+import { JobSourceSubmissionStatus } from '@prisma/client';
 import {
   ApiBearerAuth,
   ApiNotFoundResponse,
@@ -17,8 +20,17 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { JobSourceSubmissionStatus } from '@prisma/client';
+import { AuditLogService } from '../admin/audit-log.service';
+import {
+  ADMIN_AUDIT_ACTION_SUBMISSION_APPROVE,
+  ADMIN_AUDIT_ACTION_SUBMISSION_REJECT,
+  ADMIN_AUDIT_ACTION_SUBMISSION_SPAM,
+  ADMIN_AUDIT_RESOURCE_JOB_SOURCE_SUBMISSION,
+} from '../admin/admin.constants';
+import { clientRequestMeta } from '../admin/client-request-meta';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CurrentUserDecorator } from '../common/decorators/current-user.decorator';
+import type { CurrentUser } from '../common/types/current-user.type';
 import { AdminGuard } from '../common/guards/admin.guard';
 import { ApproveJobSourceSubmissionResponseDto } from './dto/approve-job-source-submission-response.dto';
 import { JobSourceSubmissionResponseDto } from './dto/job-source-submission-response.dto';
@@ -33,6 +45,7 @@ import { JobSourceSubmissionsService } from './job-source-submissions.service';
 export class AdminJobSourceSubmissionsController {
   constructor(
     private readonly jobSourceSubmissionsService: JobSourceSubmissionsService,
+    private readonly auditLog: AuditLogService,
   ) {}
 
   @Get()
@@ -54,11 +67,24 @@ export class AdminJobSourceSubmissionsController {
   })
   @ApiOkResponse({ type: ApproveJobSourceSubmissionResponseDto })
   @ApiNotFoundResponse({ description: 'Submission not found' })
-  approve(
+  async approve(
+    @CurrentUserDecorator() actor: CurrentUser,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: ReviewJobSourceSubmissionDto,
+    @Req() req: Request,
   ): Promise<ApproveJobSourceSubmissionResponseDto> {
-    return this.jobSourceSubmissionsService.approve(id, dto);
+    const result = await this.jobSourceSubmissionsService.approve(id, dto);
+    const meta = clientRequestMeta(req);
+    await this.auditLog.record({
+      actorUserId: actor.userId,
+      action: ADMIN_AUDIT_ACTION_SUBMISSION_APPROVE,
+      resourceType: ADMIN_AUDIT_RESOURCE_JOB_SOURCE_SUBMISSION,
+      resourceId: id,
+      metadata: { jobSourceId: result.jobSource.id },
+      ipAddress: meta.ipAddress,
+      userAgent: meta.userAgent,
+    });
+    return result;
   }
 
   @Post(':id/reject')
@@ -66,11 +92,24 @@ export class AdminJobSourceSubmissionsController {
   @ApiOperation({ summary: 'Reject a pending submission' })
   @ApiOkResponse({ type: JobSourceSubmissionResponseDto })
   @ApiNotFoundResponse({ description: 'Submission not found' })
-  reject(
+  async reject(
+    @CurrentUserDecorator() actor: CurrentUser,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: ReviewJobSourceSubmissionDto,
+    @Req() req: Request,
   ): Promise<JobSourceSubmissionResponseDto> {
-    return this.jobSourceSubmissionsService.reject(id, dto);
+    const result = await this.jobSourceSubmissionsService.reject(id, dto);
+    const meta = clientRequestMeta(req);
+    await this.auditLog.record({
+      actorUserId: actor.userId,
+      action: ADMIN_AUDIT_ACTION_SUBMISSION_REJECT,
+      resourceType: ADMIN_AUDIT_RESOURCE_JOB_SOURCE_SUBMISSION,
+      resourceId: id,
+      metadata: {},
+      ipAddress: meta.ipAddress,
+      userAgent: meta.userAgent,
+    });
+    return result;
   }
 
   @Post(':id/spam')
@@ -78,10 +117,23 @@ export class AdminJobSourceSubmissionsController {
   @ApiOperation({ summary: 'Mark a pending submission as spam' })
   @ApiOkResponse({ type: JobSourceSubmissionResponseDto })
   @ApiNotFoundResponse({ description: 'Submission not found' })
-  markSpam(
+  async markSpam(
+    @CurrentUserDecorator() actor: CurrentUser,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: ReviewJobSourceSubmissionDto,
+    @Req() req: Request,
   ): Promise<JobSourceSubmissionResponseDto> {
-    return this.jobSourceSubmissionsService.markSpam(id, dto);
+    const result = await this.jobSourceSubmissionsService.markSpam(id, dto);
+    const meta = clientRequestMeta(req);
+    await this.auditLog.record({
+      actorUserId: actor.userId,
+      action: ADMIN_AUDIT_ACTION_SUBMISSION_SPAM,
+      resourceType: ADMIN_AUDIT_RESOURCE_JOB_SOURCE_SUBMISSION,
+      resourceId: id,
+      metadata: {},
+      ipAddress: meta.ipAddress,
+      userAgent: meta.userAgent,
+    });
+    return result;
   }
 }

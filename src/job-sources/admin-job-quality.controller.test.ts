@@ -1,7 +1,10 @@
 import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import type { Request } from 'express';
+import { AuditLogService } from '../admin/audit-log.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdminGuard } from '../common/guards/admin.guard';
+import type { CurrentUser } from '../common/types/current-user.type';
 import { AdminJobQualityController } from './admin-job-quality.controller';
 import { ExternalJobQualityService } from './external-job-quality.service';
 
@@ -12,6 +15,13 @@ describe('AdminJobQualityController', () => {
     purgeInactiveExternalJobs: jest.Mock;
     assertPurgeEnabledOrDryRun: jest.Mock;
   };
+  let auditLog: { record: jest.Mock };
+
+  const actor: CurrentUser = {
+    userId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    email: 'admin@example.com',
+  };
+  const mockReq = { ip: '127.0.0.1', headers: {} } as Request;
 
   beforeEach(async () => {
     externalJobQualityService = {
@@ -19,6 +29,7 @@ describe('AdminJobQualityController', () => {
       purgeInactiveExternalJobs: jest.fn(),
       assertPurgeEnabledOrDryRun: jest.fn(),
     };
+    auditLog = { record: jest.fn().mockResolvedValue(undefined) };
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AdminJobQualityController],
@@ -27,6 +38,7 @@ describe('AdminJobQualityController', () => {
           provide: ExternalJobQualityService,
           useValue: externalJobQualityService,
         },
+        { provide: AuditLogService, useValue: auditLog },
       ],
     })
       .overrideGuard(JwtAuthGuard)
@@ -47,10 +59,11 @@ describe('AdminJobQualityController', () => {
       durationMs: 100,
     });
 
-    const result = await controller.scan();
+    const result = await controller.scan(actor, mockReq);
 
     expect(result.scannedCount).toBe(10);
     expect(externalJobQualityService.runQualityScan).toHaveBeenCalled();
+    expect(auditLog.record).toHaveBeenCalled();
   });
 
   it('passes dryRun to purge service', async () => {
@@ -64,7 +77,7 @@ describe('AdminJobQualityController', () => {
       durationMs: 50,
     });
 
-    const result = await controller.purgeInactive('true');
+    const result = await controller.purgeInactive(actor, 'true', mockReq);
 
     expect(
       externalJobQualityService.assertPurgeEnabledOrDryRun,
@@ -75,6 +88,7 @@ describe('AdminJobQualityController', () => {
       dryRun: true,
     });
     expect(result.matchedCount).toBe(3);
+    expect(auditLog.record).toHaveBeenCalled();
   });
 
   it('propagates purge guard errors', async () => {
@@ -85,7 +99,7 @@ describe('AdminJobQualityController', () => {
     );
 
     await expect(async () => {
-      await controller.purgeInactive(undefined);
+      await controller.purgeInactive(actor, undefined, mockReq);
     }).rejects.toBeInstanceOf(BadRequestException);
   });
 });
