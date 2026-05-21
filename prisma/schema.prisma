@@ -29,8 +29,39 @@ model User {
   savedJobs         SavedJob[]
   matchAlertPreference MatchAlertPreference?
   subscription      Subscription?
+  /// Internal admin console access (Phase V2G). One row per user max.
+  adminMembership   AdminMembership?   @relation("AdminMembershipSubject")
+  /// Admin memberships this user invited (optional audit linkage).
+  adminInvites      AdminMembership[]  @relation("AdminMembershipInvite")
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
+}
+
+/// Grants access to `/api/v1/admin/*`. Use with JwtAuthGuard + AdminGuard — never Jwt alone.
+enum AdminRole {
+  OWNER
+  ADMIN
+  SUPPORT
+  ANALYST
+}
+
+enum AdminMembershipStatus {
+  ACTIVE
+  REVOKED
+}
+
+model AdminMembership {
+  id            String                   @id @default(uuid())
+  userId        String                   @unique
+  user          User                     @relation("AdminMembershipSubject", fields: [userId], references: [id], onDelete: Cascade)
+  role          AdminRole                @default(ADMIN)
+  invitedById   String?
+  invitedBy     User?                    @relation("AdminMembershipInvite", fields: [invitedById], references: [id], onDelete: SetNull)
+  status        AdminMembershipStatus    @default(ACTIVE)
+  createdAt     DateTime                 @default(now())
+  updatedAt     DateTime                 @updatedAt
+
+  @@map("admin_memberships")
 }
 
 model Resume {

@@ -6,16 +6,35 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { PrismaService } from '../../prisma/prisma.service';
 import type { CurrentUser } from '../types/current-user.type';
 
+function parseAdminUserIds(configService: ConfigService): string[] {
+  return (
+    configService
+      .get<string>('ADMIN_USER_IDS')
+      ?.split(',')
+      .map((s) => s.trim())
+      .filter(Boolean) ?? []
+  );
+}
+
 /**
- * Minimal admin gate until Phase V2G (DB roles): allow only user ids listed in ADMIN_USER_IDS.
+ * Internal admin gate (Phase V2G). Requires a validated JWT (`JwtAuthGuard`) so `request.user` exists —
+ * never use this guard without `JwtAuthGuard` on the same route.
+ *
+ * Access is granted if either:
+ * - `ADMIN_USER_IDS` lists the user's id (temporary bootstrap until all admins are DB-backed), or
+ * - An `AdminMembership` row exists for this user with `status === ACTIVE`.
  */
 @Injectable()
 export class AdminGuard implements CanActivate {
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly prisma: PrismaService,
+  ) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const user =
       context.switchToHttp().getRequest<{ user?: CurrentUser }>().user ??
       undefined;
@@ -24,14 +43,17 @@ export class AdminGuard implements CanActivate {
       throw new UnauthorizedException();
     }
 
-    const ids =
-      this.configService
-        .get<string>('ADMIN_USER_IDS')
-        ?.split(',')
-        .map((s) => s.trim())
-        .filter(Boolean) ?? [];
+    const envIds = parseAdminUserIds(this.configService);
+    if (envIds.includes(user.userId)) {
+      return true;
+    }
 
-    if (ids.includes(user.userId)) {
+    const row = await this.prisma.adminMembership.findUnique({
+      where: { userId: user.userId },
+      select: { status: true },
+    });
+
+    if (row?.status === 'ACTIVE') {
       return true;
     }
 

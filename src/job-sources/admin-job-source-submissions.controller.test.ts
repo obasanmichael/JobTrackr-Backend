@@ -55,12 +55,14 @@ describe('AdminJobSourceSubmissionsController', () => {
     expect(result).toEqual({ submission: { id: 'sub-1' } });
   });
 
-  it('requires auth via guards in production wiring', () => {
-    const adminGuard = new AdminGuard({ get: () => '' } as never);
-    expect(() =>
+  it('requires auth via guards in production wiring', async () => {
+    const adminGuard = new AdminGuard({ get: () => '' } as never, {
+      adminMembership: { findUnique: jest.fn() },
+    } as never);
+    await expect(
       adminGuard.canActivate({
         switchToHttp: () => ({ getRequest: () => ({ user: undefined }) }),
       } as never),
-    ).toThrow(UnauthorizedException);
+    ).rejects.toThrow(UnauthorizedException);
   });
 });
