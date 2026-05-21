@@ -38,8 +38,23 @@ model User {
   adminInvites      AdminMembership[]  @relation("AdminMembershipInvite")
   auditLogsAsActor  AuditLog[]         @relation("AuditLogActor")
   auditLogsAsTarget AuditLog[]         @relation("AuditLogTarget")
+  passwordResetTokens PasswordResetToken[]
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
+}
+
+/// One-time opaque tokens for password reset emails.
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@map("password_reset_tokens")
 }
 
 /// Grants access to `/api/v1/admin/*`. Use with JwtAuthGuard + AdminGuard — never Jwt alone.

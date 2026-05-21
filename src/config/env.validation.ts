@@ -32,6 +32,12 @@ type EnvVars = {
   R2_SECRET_ACCESS_KEY?: string;
   R2_BUCKET_NAME?: string;
   R2_PUBLIC_URL?: string;
+  PASSWORD_RESET_TTL_HOURS?: string;
+  SMTP_HOST?: string;
+  SMTP_PORT?: string;
+  SMTP_USER?: string;
+  SMTP_PASS?: string;
+  SMTP_FROM?: string;
 };
 
 const ALLOWED_NODE_ENVS: NodeEnv[] = ['development', 'test', 'production'];
@@ -233,6 +239,18 @@ export function validateEnv(config: EnvVars): EnvVars {
         errors.push('R2_PUBLIC_URL must be a valid URL.');
       }
     }
+  }
+
+  if (!config.PASSWORD_RESET_TTL_HOURS?.trim()) {
+    config.PASSWORD_RESET_TTL_HOURS = '1';
+  } else if (!/^\d+$/.test(config.PASSWORD_RESET_TTL_HOURS.trim())) {
+    errors.push('PASSWORD_RESET_TTL_HOURS must be a valid number.');
+  } else if (Number(config.PASSWORD_RESET_TTL_HOURS) <= 0) {
+    errors.push('PASSWORD_RESET_TTL_HOURS must be greater than zero.');
+  }
+
+  if (config.SMTP_PORT?.trim() && !/^\d+$/.test(config.SMTP_PORT.trim())) {
+    errors.push('SMTP_PORT must be a valid number.');
   }
 
   if (errors.length > 0) {

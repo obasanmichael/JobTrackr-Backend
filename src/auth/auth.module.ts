@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { BillingModule } from '../billing/billing.module';
+import { EmailModule } from '../email/email.module';
 import { AuthController } from './auth.controller';
 import { getAuthConfig } from './auth.config';
 import { AuthService } from './auth.service';
@@ -12,6 +13,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 @Module({
   imports: [
     forwardRef(() => BillingModule),
+    EmailModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       inject: [ConfigService],

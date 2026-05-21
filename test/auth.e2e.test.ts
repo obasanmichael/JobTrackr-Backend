@@ -1,4 +1,5 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { createHash } from 'node:crypto';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { App } from 'supertest/types';
@@ -32,6 +33,7 @@ describe('Auth (e2e)', () => {
   });
 
   beforeEach(async () => {
+    await prismaService.passwordResetToken.deleteMany();
     await prismaService.applicationEvent.deleteMany();
     await prismaService.interview.deleteMany();
     await prismaService.reminder.deleteMany();
@@ -40,6 +42,7 @@ describe('Auth (e2e)', () => {
   });
 
   afterAll(async () => {
+    await prismaService.passwordResetToken.deleteMany();
     await prismaService.applicationEvent.deleteMany();
     await prismaService.interview.deleteMany();
     await prismaService.reminder.deleteMany();
@@ -228,5 +231,74 @@ describe('Auth (e2e)', () => {
     }
 
     expect(throttleTriggered).toBe(true);
+  });
+
+  it('change-password updates password for authenticated user', async () => {
+    const email = `auth-change-${Date.now()}@example.com`;
+    const registerResponse = await request(app.getHttpServer())
+      .post('/api/v1/auth/register')
+      .send({
+        name: 'Change Password User',
+        email,
+        password: 'StrongPassword123',
+      })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .post('/api/v1/auth/change-password')
+      .set(authHeader(registerResponse.body.accessToken as string))
+      .send({
+        currentPassword: 'StrongPassword123',
+        newPassword: 'EvenStrongerPassword456',
+      })
+      .expect(200)
+      .expect(({ body }: { body: { message: string } }) => {
+        expect(body.message).toBe('Password updated successfully.');
+      });
+  });
+
+  it('forgot-password always returns generic success message', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/auth/forgot-password')
+      .send({ email: 'missing-user@example.com' })
+      .expect(200)
+      .expect(({ body }: { body: { message: string } }) => {
+        expect(body.message).toContain('If an account exists');
+      });
+  });
+
+  it('reset-password accepts valid token and signs user in', async () => {
+    const email = `auth-reset-${Date.now()}@example.com`;
+    const registerResponse = await request(app.getHttpServer())
+      .post('/api/v1/auth/register')
+      .send({
+        name: 'Reset Password User',
+        email,
+        password: 'StrongPassword123',
+      })
+      .expect(201);
+
+    const userId = registerResponse.body.user.id as string;
+    const rawToken = 'c'.repeat(64);
+    const tokenHash = createHash('sha256').update(rawToken).digest('hex');
+
+    await prismaService.passwordResetToken.create({
+      data: {
+        userId,
+        tokenHash,
+        expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+      },
+    });
+
+    await request(app.getHttpServer())
+      .post('/api/v1/auth/reset-password')
+      .send({
+        token: rawToken,
+        newPassword: 'ResetPassword789',
+      })
+      .expect(201)
+      .expect(({ body }: { body: { accessToken: string } }) => {
+        expect(body.accessToken).toBeTruthy();
+      });
   });
 });
