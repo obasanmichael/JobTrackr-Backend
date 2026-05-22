@@ -49,7 +49,9 @@ describe('AdminGuard', () => {
     const guard = new AdminGuard(
       {
         get: (key: string) =>
-          key === 'ADMIN_USER_IDS' ? 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' : undefined,
+          key === 'ADMIN_USER_IDS'
+            ? 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+            : undefined,
       } as unknown as ConfigService,
       prismaStub,
     );

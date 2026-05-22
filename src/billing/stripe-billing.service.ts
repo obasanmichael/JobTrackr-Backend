@@ -5,12 +5,13 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
-import { BillingProvider, type Plan, type SubscriptionStatus } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
 import {
-  PLAN_CODE_PRO,
-  PLAN_CODE_PREMIUM,
-} from './billing.constants';
+  BillingProvider,
+  type Plan,
+  type SubscriptionStatus,
+} from '@prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
+import { PLAN_CODE_PRO, PLAN_CODE_PREMIUM } from './billing.constants';
 
 @Injectable()
 export class StripeBillingService {
@@ -34,12 +35,18 @@ export class StripeBillingService {
     }
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim();
     if (!webhookSecret) {
-      throw new ServiceUnavailableException('STRIPE_WEBHOOK_SECRET is not set.');
+      throw new ServiceUnavailableException(
+        'STRIPE_WEBHOOK_SECRET is not set.',
+      );
     }
     if (!signature) {
       throw new BadRequestException('Missing Stripe-Signature header.');
     }
-    return this.stripe.webhooks.constructEvent(payload, signature, webhookSecret);
+    return this.stripe.webhooks.constructEvent(
+      payload,
+      signature,
+      webhookSecret,
+    );
   }
 
   async createCheckoutSession(params: {
@@ -71,7 +78,10 @@ export class StripeBillingService {
       customerId = customer.id;
       await this.prisma.subscription.updateMany({
         where: { userId: params.userId },
-        data: { stripeCustomerId: customerId, provider: BillingProvider.STRIPE },
+        data: {
+          stripeCustomerId: customerId,
+          provider: BillingProvider.STRIPE,
+        },
       });
     }
 
@@ -143,8 +153,7 @@ export class StripeBillingService {
     stripeSub: Stripe.Subscription,
     fallbackUserId?: string,
   ): Promise<void> {
-    const userId =
-      stripeSub.metadata?.userId ?? fallbackUserId ?? undefined;
+    const userId = stripeSub.metadata?.userId ?? fallbackUserId ?? undefined;
     if (!userId) {
       return;
     }

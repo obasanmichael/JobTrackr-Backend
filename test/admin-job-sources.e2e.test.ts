@@ -1,4 +1,8 @@
-import { INestApplication, UnauthorizedException, ValidationPipe } from '@nestjs/common';
+import {
+  INestApplication,
+  UnauthorizedException,
+  ValidationPipe,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { App } from 'supertest/types';
@@ -40,7 +44,9 @@ describe('Admin job sources (e2e)', () => {
       .overrideGuard(AdminGuard)
       .useValue({
         canActivate: (ctx: {
-          switchToHttp: () => { getRequest: () => { user?: { userId: string } } };
+          switchToHttp: () => {
+            getRequest: () => { user?: { userId: string } };
+          };
         }) => {
           const user = ctx.switchToHttp().getRequest().user;
           if (!user?.userId) {

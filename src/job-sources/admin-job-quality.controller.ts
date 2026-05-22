@@ -90,11 +90,10 @@ export class AdminJobQualityController {
   ): Promise<ExternalJobInactivePurgeResponseDto> {
     const isDryRun = dryRun === 'true' || dryRun === '1';
     this.externalJobQualityService.assertPurgeEnabledOrDryRun(isDryRun);
-    const result = await this.externalJobQualityService.purgeInactiveExternalJobs(
-      {
+    const result =
+      await this.externalJobQualityService.purgeInactiveExternalJobs({
         dryRun: isDryRun,
-      },
-    );
+      });
     const meta = clientRequestMeta(req);
     await this.auditLog.record({
       actorUserId: actor.userId,

@@ -50,7 +50,7 @@ export class JobsService {
     if (!row) {
       throw new NotFoundException('Job not found');
     }
-    return JobsService.toDetailDto(row as ExternalJobListingRow);
+    return JobsService.toDetailDto(row);
   }
 
   static toListingDto(row: ExternalJobListingRow): JobListingDto {

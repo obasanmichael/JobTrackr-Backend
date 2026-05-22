@@ -17,9 +17,7 @@ export function clientRequestMeta(req: Request): ClientRequestMeta {
   const ipAddress = rawIp ?? firstFromForwarded;
   const userAgentRaw = req.headers['user-agent'];
   const userAgent =
-    typeof userAgentRaw === 'string'
-      ? userAgentRaw.slice(0, 2000)
-      : undefined;
+    typeof userAgentRaw === 'string' ? userAgentRaw.slice(0, 2000) : undefined;
 
   return { ipAddress, userAgent };
 }

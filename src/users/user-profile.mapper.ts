@@ -14,6 +14,7 @@ export function toUserProfileDto(
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
     avatarUrl: null,
+    timezone: user.timezone ?? null,
   };
 
   if (!user.avatarStorageKey) {

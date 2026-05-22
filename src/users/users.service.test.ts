@@ -124,6 +124,7 @@ describe('UsersService', () => {
         passwordHash: 'hashed',
         avatarStorageKey: null,
         avatarUpdatedAt: null,
+        timezone: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -137,6 +138,55 @@ describe('UsersService', () => {
       expect(prismaService.user.update).toHaveBeenCalledWith({
         where: { id: 'user-1' },
         data: { name: 'Updated Name' },
+      });
+    });
+
+    it('updates the timezone', async () => {
+      prismaService.user.update.mockResolvedValue({
+        id: 'user-1',
+        name: 'Test User',
+        email: 'test@example.com',
+        passwordHash: 'hashed',
+        avatarStorageKey: null,
+        avatarUpdatedAt: null,
+        timezone: 'America/Chicago',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      const profile = await service.updateCurrentUserProfile(
+        { userId: 'user-1', email: 'test@example.com' },
+        { timezone: 'America/Chicago' },
+      );
+
+      expect(profile.timezone).toBe('America/Chicago');
+      expect(prismaService.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        data: { timezone: 'America/Chicago' },
+      });
+    });
+
+    it('clears the timezone when null is sent', async () => {
+      prismaService.user.update.mockResolvedValue({
+        id: 'user-1',
+        name: 'Test User',
+        email: 'test@example.com',
+        passwordHash: 'hashed',
+        avatarStorageKey: null,
+        avatarUpdatedAt: null,
+        timezone: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      await service.updateCurrentUserProfile(
+        { userId: 'user-1', email: 'test@example.com' },
+        { timezone: null },
+      );
+
+      expect(prismaService.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        data: { timezone: null },
       });
     });
   });

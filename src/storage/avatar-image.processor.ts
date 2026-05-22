@@ -21,9 +21,7 @@ export async function processAvatarImage(
   mimeType: string,
 ): Promise<Buffer> {
   if (!ALLOWED_AVATAR_MIMES.has(mimeType)) {
-    throw new BadRequestException(
-      'Avatar must be a JPEG, PNG, or WebP image.',
-    );
+    throw new BadRequestException('Avatar must be a JPEG, PNG, or WebP image.');
   }
 
   if (buffer.length > AVATAR_MAX_BYTES) {

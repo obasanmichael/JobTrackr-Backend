@@ -55,7 +55,9 @@ export class EmailService {
 
     const transporter = this.getTransporter();
     await transporter.sendMail({
-      from: this.configService.get<string>('SMTP_FROM')?.trim() ?? 'JobTrackr <noreply@jobtrackr.app>',
+      from:
+        this.configService.get<string>('SMTP_FROM')?.trim() ??
+        'JobTrackr <noreply@jobtrackr.app>',
       to: input.to,
       subject: input.subject,
       text: input.text,

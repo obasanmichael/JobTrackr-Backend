@@ -31,7 +31,9 @@ export class BillingService {
       include: { plan: true },
     });
     if (!sub) {
-      throw new BadRequestException('Subscription row missing after provisioning.');
+      throw new BadRequestException(
+        'Subscription row missing after provisioning.',
+      );
     }
 
     const list = await this.entitlements.listEffectiveEntitlements(user.userId);

@@ -1,6 +1,12 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { SubscriptionStatus } from '@prisma/client';
-import { IsEnum, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import {
+  IsEnum,
+  IsOptional,
+  IsString,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 /** At least one field should be set (enforced in service). */
 export class PatchAdminSubscriptionDto {

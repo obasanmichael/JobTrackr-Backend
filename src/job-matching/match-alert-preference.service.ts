@@ -23,7 +23,9 @@ function channelsFromJson(value: unknown): Record<string, boolean> | null {
   return Object.keys(out).length > 0 ? out : null;
 }
 
-function toResponseDto(row: MatchAlertPreference): MatchAlertPreferenceResponseDto {
+function toResponseDto(
+  row: MatchAlertPreference,
+): MatchAlertPreferenceResponseDto {
   return {
     enabled: row.enabled,
     minMatchScore: row.minMatchScore,

@@ -70,9 +70,7 @@ describe('Saved jobs (e2e)', () => {
   });
 
   it('saves lists converts and shows timeline', async () => {
-    const { accessToken } = await registerUser(
-      `sj-${Date.now()}@example.com`,
-    );
+    const { accessToken } = await registerUser(`sj-${Date.now()}@example.com`);
 
     const source = await prisma.jobSource.create({
       data: {

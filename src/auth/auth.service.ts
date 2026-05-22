@@ -143,7 +143,9 @@ export class AuthService {
     return { message: PASSWORD_UPDATED_MESSAGE };
   }
 
-  async forgotPassword(payload: ForgotPasswordDto): Promise<MessageResponseDto> {
+  async forgotPassword(
+    payload: ForgotPasswordDto,
+  ): Promise<MessageResponseDto> {
     const user = await this.prismaService.user.findUnique({
       where: { email: payload.email },
     });

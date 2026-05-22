@@ -40,7 +40,8 @@ export class JobListingDto {
 
   @ApiPropertyOptional({
     type: JobListingSourceDto,
-    description: 'Ingestion source metadata (name + type); raw provider payloads are never exposed',
+    description:
+      'Ingestion source metadata (name + type); raw provider payloads are never exposed',
   })
   sourceMeta!: JobListingSourceDto | null;
 

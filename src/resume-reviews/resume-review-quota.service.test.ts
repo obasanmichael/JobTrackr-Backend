@@ -2,9 +2,9 @@ import { ResumeReviewQuotaService } from './resume-review-quota.service';
 
 describe('ResumeReviewQuotaService.resolveMonthlySuccessLimit', () => {
   it('honours entitlement limit when set (numeric)', () => {
-    expect(
-      ResumeReviewQuotaService.resolveMonthlySuccessLimit('-1', 3),
-    ).toBe(3);
+    expect(ResumeReviewQuotaService.resolveMonthlySuccessLimit('-1', 3)).toBe(
+      3,
+    );
     expect(
       ResumeReviewQuotaService.resolveMonthlySuccessLimit(undefined, 0),
     ).toBe(0);
@@ -24,24 +24,32 @@ describe('ResumeReviewQuotaService.resolveMonthlySuccessLimit', () => {
       ResumeReviewQuotaService.resolveMonthlySuccessLimit('-1', undefined),
     ).toBeNull();
     expect(
-      ResumeReviewQuotaService.resolveMonthlySuccessLimit('unlimited', undefined),
+      ResumeReviewQuotaService.resolveMonthlySuccessLimit(
+        'unlimited',
+        undefined,
+      ),
     ).toBeNull();
     expect(
-      ResumeReviewQuotaService.resolveMonthlySuccessLimit('UnLimited', undefined),
+      ResumeReviewQuotaService.resolveMonthlySuccessLimit(
+        'UnLimited',
+        undefined,
+      ),
     ).toBeNull();
   });
 
   it('parses positive digit strings when entitlement unset', () => {
-    expect(ResumeReviewQuotaService.resolveMonthlySuccessLimit('1', undefined)).toBe(
-      1,
-    );
+    expect(
+      ResumeReviewQuotaService.resolveMonthlySuccessLimit('1', undefined),
+    ).toBe(1);
     expect(
       ResumeReviewQuotaService.resolveMonthlySuccessLimit('42', undefined),
     ).toBe(42);
   });
 
   it('returns null for invalid env values when entitlement unset', () => {
-    expect(ResumeReviewQuotaService.resolveMonthlySuccessLimit('0', undefined)).toBeNull();
+    expect(
+      ResumeReviewQuotaService.resolveMonthlySuccessLimit('0', undefined),
+    ).toBeNull();
     expect(
       ResumeReviewQuotaService.resolveMonthlySuccessLimit('01', undefined),
     ).toBeNull();

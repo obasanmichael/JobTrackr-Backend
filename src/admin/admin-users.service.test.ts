@@ -97,12 +97,10 @@ describe('AdminUsersService', () => {
       updatedAt: now,
     });
 
-    const out = await service.patchUserDisplayName(
-      'actor',
-      'target',
-      'New',
-      { ipAddress: '1.2.3.4', userAgent: 'jest-test' },
-    );
+    const out = await service.patchUserDisplayName('actor', 'target', 'New', {
+      ipAddress: '1.2.3.4',
+      userAgent: 'jest-test',
+    });
 
     expect(out.name).toBe('New');
     expect(prisma.user.update).toHaveBeenCalled();

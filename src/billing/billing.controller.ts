@@ -111,7 +111,7 @@ export class BillingWebhookController {
 
     switch (event.type) {
       case 'checkout.session.completed': {
-        const session = event.data.object as Stripe.Checkout.Session;
+        const session = event.data.object;
         if (session.mode === 'subscription' && session.subscription) {
           const subId =
             typeof session.subscription === 'string'
@@ -123,7 +123,7 @@ export class BillingWebhookController {
       }
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted': {
-        const stripeSub = event.data.object as Stripe.Subscription;
+        const stripeSub = event.data.object;
         await this.stripeBilling.syncSubscriptionFromStripeResource(stripeSub);
         break;
       }
@@ -134,7 +134,9 @@ export class BillingWebhookController {
     return { received: true };
   }
 
-  private async expandAndSyncSubscription(subscriptionId: string): Promise<void> {
+  private async expandAndSyncSubscription(
+    subscriptionId: string,
+  ): Promise<void> {
     const secret = process.env.STRIPE_SECRET_KEY?.trim();
     if (!secret) {
       return;

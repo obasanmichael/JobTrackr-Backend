@@ -22,4 +22,11 @@ export class UserProfileDto {
     description: 'Public CDN URL for the user avatar, if set.',
   })
   avatarUrl!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    description: 'IANA timezone for reminders and scheduled notifications.',
+  })
+  timezone!: string | null;
 }

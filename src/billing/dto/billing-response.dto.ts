@@ -18,7 +18,10 @@ export class PlanSummaryDto {
   @ApiProperty()
   currency!: string;
 
-  @ApiProperty({ description: 'Whether checkout can target this plan (Stripe price configured).' })
+  @ApiProperty({
+    description:
+      'Whether checkout can target this plan (Stripe price configured).',
+  })
   checkoutAvailable!: boolean;
 
   @ApiProperty()
@@ -49,7 +52,9 @@ export class BillingMeResponseDto {
   @ApiProperty()
   planName!: string;
 
-  @ApiProperty({ enum: ['BETA', 'ACTIVE', 'TRIALING', 'PAST_DUE', 'CANCELLED', 'EXPIRED'] })
+  @ApiProperty({
+    enum: ['BETA', 'ACTIVE', 'TRIALING', 'PAST_DUE', 'CANCELLED', 'EXPIRED'],
+  })
   subscriptionStatus!: string;
 
   @ApiProperty({ enum: ['NONE', 'STRIPE'] })

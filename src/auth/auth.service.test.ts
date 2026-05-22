@@ -106,9 +106,9 @@ describe('AuthService', () => {
 
       expect(response.accessToken).toBe('signed-jwt-token');
       expect(response.user.email).toBe('test@example.com');
-      expect(subscriptionProvisioning.ensureBetaSubscription).toHaveBeenCalledWith(
-        'user-1',
-      );
+      expect(
+        subscriptionProvisioning.ensureBetaSubscription,
+      ).toHaveBeenCalledWith('user-1');
       expect(
         (response.user as Record<string, unknown>).passwordHash,
       ).toBeUndefined();
@@ -181,7 +181,9 @@ describe('AuthService', () => {
         passwordHash: hash,
       });
       prismaService.user.update.mockResolvedValue({});
-      prismaService.passwordResetToken.deleteMany.mockResolvedValue({ count: 0 });
+      prismaService.passwordResetToken.deleteMany.mockResolvedValue({
+        count: 0,
+      });
 
       const response = await service.changePassword(
         { userId: 'user-1', email: 'test@example.com' },
@@ -232,8 +234,12 @@ describe('AuthService', () => {
         id: 'user-1',
         email: 'test@example.com',
       });
-      prismaService.passwordResetToken.deleteMany.mockResolvedValue({ count: 0 });
-      prismaService.passwordResetToken.create.mockResolvedValue({ id: 'token-1' });
+      prismaService.passwordResetToken.deleteMany.mockResolvedValue({
+        count: 0,
+      });
+      prismaService.passwordResetToken.create.mockResolvedValue({
+        id: 'token-1',
+      });
 
       const response = await service.forgotPassword({
         email: 'test@example.com',
@@ -276,7 +282,9 @@ describe('AuthService', () => {
         },
       });
       prismaService.passwordResetToken.update.mockResolvedValue({});
-      prismaService.passwordResetToken.deleteMany.mockResolvedValue({ count: 0 });
+      prismaService.passwordResetToken.deleteMany.mockResolvedValue({
+        count: 0,
+      });
       prismaService.user.update.mockResolvedValue({
         id: 'user-1',
         name: 'Test User',

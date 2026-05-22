@@ -1,11 +1,30 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+  MinLength,
+  ValidateIf,
+} from 'class-validator';
 
 export class UpdateUserProfileDto {
-  @ApiProperty({ example: 'Jane Doe' })
+  @ApiPropertyOptional({ example: 'Jane Doe' })
+  @IsOptional()
   @IsString()
   @IsNotEmpty()
   @MinLength(1)
   @MaxLength(120)
-  name!: string;
+  name?: string;
+
+  @ApiPropertyOptional({
+    nullable: true,
+    example: 'America/New_York',
+    description: 'IANA timezone identifier. Pass null to clear.',
+  })
+  @IsOptional()
+  @ValidateIf((_obj, value) => value !== null)
+  @IsString()
+  @MaxLength(64)
+  timezone?: string | null;
 }

@@ -10,7 +10,9 @@ import {
 } from 'class-validator';
 
 export class MatchAlertPreferenceResponseDto {
-  @ApiProperty({ description: 'Whether match alerts are enabled for this user.' })
+  @ApiProperty({
+    description: 'Whether match alerts are enabled for this user.',
+  })
   enabled!: boolean;
 
   @ApiProperty({

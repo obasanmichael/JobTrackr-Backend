@@ -51,9 +51,7 @@ export class AdminUsersController {
   @ApiOperation({ summary: 'User detail plus subscription snapshot (admin)' })
   @ApiOkResponse({ type: AdminUserDetailDto })
   @ApiNotFoundResponse({ description: 'User not found' })
-  getUser(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<AdminUserDetailDto> {
+  getUser(@Param('id', ParseUUIDPipe) id: string): Promise<AdminUserDetailDto> {
     return this.adminUsersService.getUserById(id);
   }
 

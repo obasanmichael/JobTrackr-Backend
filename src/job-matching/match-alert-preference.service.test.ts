@@ -33,7 +33,10 @@ describe('MatchAlertPreferenceService', () => {
       },
     } as unknown as PrismaService;
     const service = new MatchAlertPreferenceService(prisma);
-    const res = await service.upsert(user, { enabled: true, minMatchScore: 80 });
+    const res = await service.upsert(user, {
+      enabled: true,
+      minMatchScore: 80,
+    });
     expect(res.enabled).toBe(true);
     expect(res.minMatchScore).toBe(80);
     expect(prisma.matchAlertPreference.upsert).toHaveBeenCalled();

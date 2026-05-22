@@ -1,10 +1,7 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import type { FeatureEntitlement } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import {
-  ALL_FEATURE_KEYS,
-  type FeatureKey,
-} from './billing.constants';
+import { ALL_FEATURE_KEYS, type FeatureKey } from './billing.constants';
 
 export type EffectiveEntitlement = {
   featureKey: FeatureKey;
@@ -16,7 +13,9 @@ export type EffectiveEntitlement = {
 export class EntitlementsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async listEffectiveEntitlements(userId: string): Promise<EffectiveEntitlement[]> {
+  async listEffectiveEntitlements(
+    userId: string,
+  ): Promise<EffectiveEntitlement[]> {
     const sub = await this.prisma.subscription.findUnique({
       where: { userId },
       include: {
@@ -47,7 +46,10 @@ export class EntitlementsService {
     });
   }
 
-  async assertFeatureEnabled(userId: string, featureKey: FeatureKey): Promise<void> {
+  async assertFeatureEnabled(
+    userId: string,
+    featureKey: FeatureKey,
+  ): Promise<void> {
     const list = await this.listEffectiveEntitlements(userId);
     const hit = list.find((e) => e.featureKey === featureKey);
     if (!hit?.isEnabled) {

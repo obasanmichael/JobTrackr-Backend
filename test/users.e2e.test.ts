@@ -91,4 +91,35 @@ describe('Users (e2e)', () => {
         expect(body).not.toHaveProperty('passwordHash');
       });
   });
+
+  it('/api/v1/users/me PATCH updates timezone', async () => {
+    const registerResponse = await request(app.getHttpServer())
+      .post('/api/v1/auth/register')
+      .send({
+        name: 'Timezone User',
+        email: `users-tz-${Date.now()}@example.com`,
+        password: 'StrongPassword123',
+      })
+      .expect(201);
+
+    const token = registerResponse.body.accessToken as string;
+
+    await request(app.getHttpServer())
+      .patch('/api/v1/users/me')
+      .set(authHeader(token))
+      .send({ timezone: 'America/New_York' })
+      .expect(200)
+      .expect(({ body }: { body: Record<string, unknown> }) => {
+        expect(body.timezone).toBe('America/New_York');
+      });
+
+    await request(app.getHttpServer())
+      .patch('/api/v1/users/me')
+      .set(authHeader(token))
+      .send({ timezone: null })
+      .expect(200)
+      .expect(({ body }: { body: Record<string, unknown> }) => {
+        expect(body.timezone).toBeNull();
+      });
+  });
 });

@@ -1,4 +1,12 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
@@ -78,7 +86,9 @@ export class AuthController {
   @ApiBody({ type: ChangePasswordDto })
   @ApiOkResponse({ type: MessageResponseDto })
   @ApiBadRequestResponse({ description: 'Validation error.' })
-  @ApiUnauthorizedResponse({ description: 'Missing token or wrong current password.' })
+  @ApiUnauthorizedResponse({
+    description: 'Missing token or wrong current password.',
+  })
   changePassword(
     @CurrentUserDecorator() currentUser: CurrentUser,
     @Body() payload: ChangePasswordDto,

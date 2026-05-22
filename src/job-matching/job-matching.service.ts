@@ -99,7 +99,7 @@ export class JobMatchingService {
         experienceScore: 0,
         locationScore: 0,
         recencyScore: 0,
-        job: mapExternalJobToListingDto(job as ExternalJobListingRow),
+        job: mapExternalJobToListingDto(job),
       };
     }
 

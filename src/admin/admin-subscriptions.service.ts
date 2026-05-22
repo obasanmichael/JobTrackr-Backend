@@ -3,10 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import {
-  BillingProvider,
-  SubscriptionStatus,
-} from '@prisma/client';
+import { BillingProvider, SubscriptionStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   ADMIN_AUDIT_ACTION_SUBSCRIPTION_OVERRIDE,
@@ -134,31 +131,30 @@ export class AdminSubscriptionsService {
       ? { planCode: existing.plan.code, status: existing.status as string }
       : null;
 
-    const row =
-      existing
-        ? await this.prisma.subscription.update({
-            where: { userId: targetUserId },
-            data: {
-              ...(planId !== undefined && { planId }),
-              ...(dto.status !== undefined && { status: dto.status }),
-            },
-            include: {
-              user: { select: { id: true, email: true, name: true } },
-              plan: { select: { code: true, name: true } },
-            },
-          })
-        : await this.prisma.subscription.create({
-            data: {
-              userId: targetUserId,
-              planId: planId!,
-              status: dto.status ?? SubscriptionStatus.BETA,
-              provider: BillingProvider.NONE,
-            },
-            include: {
-              user: { select: { id: true, email: true, name: true } },
-              plan: { select: { code: true, name: true } },
-            },
-          });
+    const row = existing
+      ? await this.prisma.subscription.update({
+          where: { userId: targetUserId },
+          data: {
+            ...(planId !== undefined && { planId }),
+            ...(dto.status !== undefined && { status: dto.status }),
+          },
+          include: {
+            user: { select: { id: true, email: true, name: true } },
+            plan: { select: { code: true, name: true } },
+          },
+        })
+      : await this.prisma.subscription.create({
+          data: {
+            userId: targetUserId,
+            planId: planId!,
+            status: dto.status ?? SubscriptionStatus.BETA,
+            provider: BillingProvider.NONE,
+          },
+          include: {
+            user: { select: { id: true, email: true, name: true } },
+            plan: { select: { code: true, name: true } },
+          },
+        });
 
     await this.auditLog.record({
       actorUserId,

@@ -5,7 +5,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { User } from '@prisma/client';
+import type { Prisma, User } from '@prisma/client';
+import { isValidIanaTimezone } from '../common/utils/iana-timezone.util';
 import type { CurrentUser } from '../common/types/current-user.type';
 import { PrismaService } from '../prisma/prisma.service';
 import {
@@ -39,14 +40,36 @@ export class UsersService {
     currentUser: CurrentUser,
     dto: UpdateUserProfileDto,
   ): Promise<UserProfileDto> {
-    const name = dto.name.trim();
-    if (!name) {
-      throw new BadRequestException('Name cannot be empty.');
+    const hasName = dto.name !== undefined;
+    const hasTimezone = dto.timezone !== undefined;
+    if (!hasName && !hasTimezone) {
+      throw new BadRequestException('At least one field must be provided.');
+    }
+
+    const data: Prisma.UserUpdateInput = {};
+
+    if (hasName) {
+      const name = dto.name!.trim();
+      if (!name) {
+        throw new BadRequestException('Name cannot be empty.');
+      }
+      data.name = name;
+    }
+
+    if (hasTimezone) {
+      const timezone = dto.timezone?.trim() ?? '';
+      if (!timezone) {
+        data.timezone = null;
+      } else if (!isValidIanaTimezone(timezone)) {
+        throw new BadRequestException('Invalid timezone.');
+      } else {
+        data.timezone = timezone;
+      }
     }
 
     const user = await this.prismaService.user.update({
       where: { id: currentUser.userId },
-      data: { name },
+      data,
     });
 
     return toUserProfileDto(user, this.configService);

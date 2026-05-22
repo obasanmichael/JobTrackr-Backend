@@ -12,7 +12,10 @@ export class MatchAlertDeliveryService {
   /**
    * No-op stub: log intent for observability (E.5) until SMTP/push is wired.
    */
-  previewDigestForUser(_user: CurrentUser): { wouldSend: boolean; reason: string } {
+  previewDigestForUser(_user: CurrentUser): {
+    wouldSend: boolean;
+    reason: string;
+  } {
     return {
       wouldSend: false,
       reason: 'Match alert delivery is not configured (V2E.E4 stub).',

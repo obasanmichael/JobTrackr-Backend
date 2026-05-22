@@ -70,7 +70,9 @@ export class AdminTeamService {
     let row;
     if (existing) {
       if (existing.status === AdminMembershipStatus.ACTIVE) {
-        throw new ConflictException('User already has an active admin membership.');
+        throw new ConflictException(
+          'User already has an active admin membership.',
+        );
       }
       row = await this.prisma.adminMembership.update({
         where: { id: existing.id },
@@ -194,11 +196,11 @@ export class AdminTeamService {
     return { role: m.role };
   }
 
-  private assertCanAssignRole(actorRole: AdminRole, targetRole: AdminRole): void {
-    if (
-      targetRole === AdminRole.OWNER &&
-      actorRole !== AdminRole.OWNER
-    ) {
+  private assertCanAssignRole(
+    actorRole: AdminRole,
+    targetRole: AdminRole,
+  ): void {
+    if (targetRole === AdminRole.OWNER && actorRole !== AdminRole.OWNER) {
       throw new ForbiddenException('Only OWNER may assign OWNER.');
     }
   }

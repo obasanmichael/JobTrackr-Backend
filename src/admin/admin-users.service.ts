@@ -28,7 +28,9 @@ export class AdminUsersService {
     private readonly auditLog: AuditLogService,
   ) {}
 
-  async listUsers(query: AdminUserListQueryDto): Promise<AdminUsersPageResponseDto> {
+  async listUsers(
+    query: AdminUserListQueryDto,
+  ): Promise<AdminUsersPageResponseDto> {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
     const skip = (page - 1) * limit;

@@ -165,4 +165,49 @@ describe('Matches (e2e)', () => {
 
     expect(listResponse.body.matches[0].overallScore).toBeGreaterThan(0);
   });
+
+  it('returns default alert preferences before first save', async () => {
+    const { accessToken } = await registerUser(
+      `matches-alerts-${Date.now()}@example.com`,
+    );
+
+    const response = await request(app.getHttpServer())
+      .get('/api/v1/matches/alert-preferences')
+      .set(authHeader(accessToken))
+      .expect(200);
+
+    expect(response.body.enabled).toBe(false);
+    expect(response.body.minMatchScore).toBe(70);
+    expect(response.body.channels).toBeNull();
+  });
+
+  it('persists alert preferences via PATCH', async () => {
+    const { accessToken } = await registerUser(
+      `matches-alerts-patch-${Date.now()}@example.com`,
+    );
+
+    await request(app.getHttpServer())
+      .patch('/api/v1/matches/alert-preferences')
+      .set(authHeader(accessToken))
+      .send({
+        enabled: true,
+        minMatchScore: 80,
+        channels: { email: true, push: false },
+      })
+      .expect(200)
+      .expect(({ body }: { body: Record<string, unknown> }) => {
+        expect(body.enabled).toBe(true);
+        expect(body.minMatchScore).toBe(80);
+        expect(body.channels).toEqual({ email: true, push: false });
+      });
+
+    await request(app.getHttpServer())
+      .get('/api/v1/matches/alert-preferences')
+      .set(authHeader(accessToken))
+      .expect(200)
+      .expect(({ body }: { body: Record<string, unknown> }) => {
+        expect(body.enabled).toBe(true);
+        expect(body.minMatchScore).toBe(80);
+      });
+  });
 });
