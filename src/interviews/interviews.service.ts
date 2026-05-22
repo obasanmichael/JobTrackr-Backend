@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { CalendarSyncService } from '../calendar/calendar-sync.service';
 import type { CurrentUser } from '../common/types/current-user.type';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateInterviewDto } from './dto/create-interview.dto';
@@ -7,7 +8,10 @@ import { UpdateInterviewDto } from './dto/update-interview.dto';
 
 @Injectable()
 export class InterviewsService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly calendarSync: CalendarSyncService,
+  ) {}
 
   async create(
     currentUser: CurrentUser,
@@ -31,6 +35,11 @@ export class InterviewsService {
         outcome: payload.outcome,
       },
     });
+
+    void this.calendarSync.syncInterviewIfEnabled(
+      currentUser.userId,
+      created.id,
+    );
 
     return this.toResponse(created);
   }
@@ -96,11 +105,18 @@ export class InterviewsService {
       },
     });
 
+    void this.calendarSync.syncInterviewIfEnabled(currentUser.userId, id);
+
     return this.toResponse(updated);
   }
 
   async remove(currentUser: CurrentUser, id: string): Promise<void> {
     await this.getOwnedInterviewOrThrow(currentUser.userId, id);
+
+    await this.calendarSync.deleteInterviewFromCalendarIfConnected(
+      currentUser.userId,
+      id,
+    );
 
     await this.prismaService.interview.delete({
       where: { id },

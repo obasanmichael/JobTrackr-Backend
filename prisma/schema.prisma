@@ -19,6 +19,8 @@ model User {
   /// R2 object key, e.g. avatars/{userId}/avatar.webp
   avatarStorageKey String?
   avatarUpdatedAt  DateTime?
+  /// IANA timezone, e.g. America/New_York
+  timezone         String?
   applications     JobApplication[]
   events           ApplicationEvent[]
   reminders        Reminder[]
@@ -39,6 +41,9 @@ model User {
   auditLogsAsActor  AuditLog[]         @relation("AuditLogActor")
   auditLogsAsTarget AuditLog[]         @relation("AuditLogTarget")
   passwordResetTokens PasswordResetToken[]
+  calendarIntegrations CalendarIntegration[]
+  calendarEvents       CalendarEvent[]
+  notifications        Notification[]
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 }
@@ -642,4 +647,90 @@ model JobSourceSubmission {
 
   @@index([status, createdAt])
   @@index([careersUrl])
+}
+
+enum CalendarProvider {
+  GOOGLE
+}
+
+enum CalendarEventSourceType {
+  INTERVIEW
+}
+
+enum CalendarEventSyncStatus {
+  SYNCED
+  PENDING
+  FAILED
+}
+
+/// Connected calendar provider (V2I).
+model CalendarIntegration {
+  id                    String           @id @default(uuid())
+  userId                String
+  user                  User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider              CalendarProvider
+  providerAccountEmail  String?
+  accessTokenEncrypted  String?
+  refreshTokenEncrypted String
+  scope                 String?
+  expiresAt             DateTime?
+  isActive              Boolean          @default(true)
+  autoSyncInterviews    Boolean          @default(true)
+  lastSyncAt            DateTime?
+  lastError             String?
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+  calendarEvents        CalendarEvent[]
+
+  @@unique([userId, provider])
+  @@index([userId])
+  @@map("calendar_integrations")
+}
+
+/// Maps JobTrackr records to external calendar events (V2I).
+model CalendarEvent {
+  id              String                  @id @default(uuid())
+  userId          String
+  user            User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  integrationId   String
+  integration     CalendarIntegration     @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  sourceType      CalendarEventSourceType
+  sourceId        String
+  providerEventId String?
+  syncStatus      CalendarEventSyncStatus @default(PENDING)
+  lastSyncedAt    DateTime?
+  lastError       String?
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+
+  @@unique([integrationId, sourceType, sourceId])
+  @@index([userId])
+  @@map("calendar_events")
+}
+
+enum NotificationType {
+  RESUME_REVIEW_COMPLETED
+  JOB_MATCHES_AVAILABLE
+  JOB_ALERT_DIGEST
+  CALENDAR_SYNC_FAILED
+  REMINDER_DUE
+  INTERVIEW_UPCOMING
+  GENERAL
+}
+
+/// In-app notifications (V2J).
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  message   String
+  metadata  Json?
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
+  @@map("notifications")
 }

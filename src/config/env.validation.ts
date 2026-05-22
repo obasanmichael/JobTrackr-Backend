@@ -38,6 +38,10 @@ type EnvVars = {
   SMTP_USER?: string;
   SMTP_PASS?: string;
   SMTP_FROM?: string;
+  ENCRYPTION_KEY?: string;
+  GOOGLE_CLIENT_ID?: string;
+  GOOGLE_CLIENT_SECRET?: string;
+  GOOGLE_CALENDAR_REDIRECT_URI?: string;
 };
 
 const ALLOWED_NODE_ENVS: NodeEnv[] = ['development', 'test', 'production'];
@@ -251,6 +255,52 @@ export function validateEnv(config: EnvVars): EnvVars {
 
   if (config.SMTP_PORT?.trim() && !/^\d+$/.test(config.SMTP_PORT.trim())) {
     errors.push('SMTP_PORT must be a valid number.');
+  }
+
+  if (!config.ENCRYPTION_KEY?.trim()) {
+    if (config.NODE_ENV === 'test') {
+      config.ENCRYPTION_KEY = Buffer.alloc(32, 1).toString('base64');
+    } else {
+      errors.push(
+        'ENCRYPTION_KEY is required (generate with: openssl rand -base64 32).',
+      );
+    }
+  } else {
+    const keyBytes = Buffer.from(config.ENCRYPTION_KEY.trim(), 'base64');
+    if (keyBytes.length !== 32) {
+      errors.push(
+        'ENCRYPTION_KEY must decode to 32 bytes (openssl rand -base64 32).',
+      );
+    }
+  }
+
+  const googleVars = [
+    'GOOGLE_CLIENT_ID',
+    'GOOGLE_CLIENT_SECRET',
+    'GOOGLE_CALENDAR_REDIRECT_URI',
+  ] as const;
+  const googleConfigured = googleVars.some((key) => config[key]?.trim());
+  if (googleConfigured) {
+    for (const key of googleVars) {
+      if (!config[key]?.trim()) {
+        errors.push(`${key} is required when Google Calendar is configured.`);
+      }
+    }
+    if (config.GOOGLE_CALENDAR_REDIRECT_URI?.trim()) {
+      try {
+        const url = new URL(config.GOOGLE_CALENDAR_REDIRECT_URI.trim());
+        if (!['http:', 'https:'].includes(url.protocol)) {
+          errors.push('GOOGLE_CALENDAR_REDIRECT_URI must use http or https.');
+        }
+      } catch {
+        errors.push('GOOGLE_CALENDAR_REDIRECT_URI must be a valid URL.');
+      }
+    }
+    if (!config.FRONTEND_URL?.trim()) {
+      errors.push(
+        'FRONTEND_URL is required when Google Calendar OAuth is configured.',
+      );
+    }
   }
 
   if (errors.length > 0) {

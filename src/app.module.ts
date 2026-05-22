@@ -7,12 +7,15 @@ import { ApplicationEventsModule } from './application-events/application-events
 import { ApplicationsModule } from './applications/applications.module';
 import { AuthModule } from './auth/auth.module';
 import { BillingModule } from './billing/billing.module';
+import { CalendarModule } from './calendar/calendar.module';
 import { validateEnv } from './config/env.validation';
+import { CryptoModule } from './crypto/crypto.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { HealthModule } from './health/health.module';
 import { InterviewsModule } from './interviews/interviews.module';
 import { JobSourcesModule } from './job-sources/job-sources.module';
 import { JobMatchingModule } from './job-matching/job-matching.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RemindersModule } from './reminders/reminders.module';
 import { JobsModule } from './jobs/jobs.module';
@@ -49,6 +52,7 @@ import { UsersModule } from './users/users.module';
       },
     }),
     PrismaModule,
+    CryptoModule,
     AdminModule,
     BillingModule,
     HealthModule,
@@ -64,6 +68,8 @@ import { UsersModule } from './users/users.module';
     ApplicationEventsModule,
     RemindersModule,
     InterviewsModule,
+    CalendarModule,
+    NotificationsModule,
     DashboardModule,
   ],
   providers: [
