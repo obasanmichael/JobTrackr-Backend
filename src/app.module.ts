@@ -43,13 +43,20 @@ import { UsersModule } from './users/users.module';
           configService.get<string>('THROTTLE_LIMIT') ?? '100',
         );
 
-        return [
-          {
-            name: 'default',
-            ttl: seconds(ttlSeconds),
-            limit,
+        return {
+          throttlers: [
+            {
+              name: 'default',
+              ttl: seconds(ttlSeconds),
+              limit,
+            },
+          ],
+          skipIf: (context) => {
+            const request = context.switchToHttp().getRequest<{ url?: string }>();
+            const path = request.url ?? '';
+            return path.includes('/internal/cron');
           },
-        ];
+        };
       },
     }),
     PrismaModule,

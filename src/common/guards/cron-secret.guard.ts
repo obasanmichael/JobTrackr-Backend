@@ -20,12 +20,15 @@ export class CronSecretGuard implements CanActivate {
     const request = context.switchToHttp().getRequest<Request>();
     const authorization = request.headers.authorization;
     const headerSecret = request.headers['x-cron-secret'];
-    const provided =
-      typeof authorization === 'string' && authorization.startsWith('Bearer ')
-        ? authorization.slice('Bearer '.length).trim()
-        : typeof headerSecret === 'string'
-          ? headerSecret.trim()
-          : '';
+    let provided = '';
+    if (typeof headerSecret === 'string') {
+      provided = headerSecret.trim();
+    } else if (typeof authorization === 'string') {
+      const value = authorization.trim();
+      provided = value.startsWith('Bearer ')
+        ? value.slice('Bearer '.length).trim()
+        : value;
+    }
 
     if (!provided || provided !== secret) {
       throw new UnauthorizedException('Invalid cron secret.');

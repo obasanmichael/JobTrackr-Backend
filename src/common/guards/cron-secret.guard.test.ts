@@ -19,6 +19,32 @@ describe('CronSecretGuard', () => {
     expect(guard.canActivate(context as never)).toBe(true);
   });
 
+  it('allows raw authorization header without Bearer prefix', () => {
+    const guard = new CronSecretGuard(configService as never);
+    const context = {
+      switchToHttp: () => ({
+        getRequest: () => ({
+          headers: { authorization: 'cron-secret' },
+        }),
+      }),
+    };
+
+    expect(guard.canActivate(context as never)).toBe(true);
+  });
+
+  it('allows x-cron-secret header', () => {
+    const guard = new CronSecretGuard(configService as never);
+    const context = {
+      switchToHttp: () => ({
+        getRequest: () => ({
+          headers: { 'x-cron-secret': 'cron-secret' },
+        }),
+      }),
+    };
+
+    expect(guard.canActivate(context as never)).toBe(true);
+  });
+
   it('rejects invalid secret', () => {
     const guard = new CronSecretGuard(configService as never);
     const context = {

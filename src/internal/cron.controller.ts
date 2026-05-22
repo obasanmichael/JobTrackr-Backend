@@ -20,6 +20,7 @@ export class CronController {
   ) {}
 
   @Post('notifications/run-due-checks')
+  @SkipThrottle({ default: true })
   @HttpCode(HttpStatus.OK)
   @UseGuards(CronSecretGuard)
   @ApiOperation({
