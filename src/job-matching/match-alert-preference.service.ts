@@ -1,35 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import type { MatchAlertPreference } from '@prisma/client';
 import type { CurrentUser } from '../common/types/current-user.type';
+import { NotificationPreferenceService } from '../notifications/notification-preference.service';
+import { normalizeChannels } from '../notifications/notification-preference.types';
 import { PrismaService } from '../prisma/prisma.service';
 import type {
   MatchAlertPreferenceResponseDto,
   UpdateMatchAlertPreferenceDto,
 } from './dto/match-alert-preference.dto';
 
-function channelsFromJson(value: unknown): Record<string, boolean> | null {
-  if (value === null || value === undefined) {
-    return null;
-  }
-  if (typeof value !== 'object' || Array.isArray(value)) {
-    return null;
-  }
-  const out: Record<string, boolean> = {};
-  for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
-    if (typeof v === 'boolean') {
-      out[k] = v;
-    }
-  }
-  return Object.keys(out).length > 0 ? out : null;
-}
-
 function toResponseDto(
   row: MatchAlertPreference,
 ): MatchAlertPreferenceResponseDto {
+  const channels = normalizeChannels(row.channels);
   return {
     enabled: row.enabled,
     minMatchScore: row.minMatchScore,
-    channels: channelsFromJson(row.channels),
+    channels,
     lastNotifiedAt: row.lastNotifiedAt,
     updatedAt: row.updatedAt,
   };
@@ -37,45 +24,69 @@ function toResponseDto(
 
 @Injectable()
 export class MatchAlertPreferenceService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationPreferences: NotificationPreferenceService,
+  ) {}
 
   async getOrDescribeDefaults(
     user: CurrentUser,
   ): Promise<MatchAlertPreferenceResponseDto> {
+    const unified = await this.notificationPreferences.getOrDescribeDefaults(user);
+    const matches = unified.categories.matches;
+
     const row = await this.prisma.matchAlertPreference.findUnique({
       where: { userId: user.userId },
     });
-    if (!row) {
-      return {
-        enabled: false,
-        minMatchScore: 70,
-        channels: null,
-        lastNotifiedAt: null,
-      };
-    }
-    return toResponseDto(row);
+
+    return {
+      enabled: matches.enabled,
+      minMatchScore: matches.minMatchScore,
+      channels: matches.channels,
+      lastNotifiedAt: row?.lastNotifiedAt ?? null,
+      updatedAt: unified.updatedAt,
+    };
   }
 
   async upsert(
     user: CurrentUser,
     dto: UpdateMatchAlertPreferenceDto,
   ): Promise<MatchAlertPreferenceResponseDto> {
-    const row = await this.prisma.matchAlertPreference.upsert({
-      where: { userId: user.userId },
-      create: {
-        userId: user.userId,
-        enabled: dto.enabled ?? false,
-        minMatchScore: dto.minMatchScore ?? 70,
-        channels: dto.channels === undefined ? undefined : dto.channels,
-      },
-      update: {
-        ...(dto.enabled !== undefined ? { enabled: dto.enabled } : {}),
-        ...(dto.minMatchScore !== undefined
-          ? { minMatchScore: dto.minMatchScore }
-          : {}),
-        ...(dto.channels !== undefined ? { channels: dto.channels } : {}),
+    const current = await this.notificationPreferences.getOrDescribeDefaults(user);
+
+    const updated = await this.notificationPreferences.upsert(user, {
+      categories: {
+        matches: {
+          enabled: dto.enabled ?? current.categories.matches.enabled,
+          minMatchScore:
+            dto.minMatchScore ?? current.categories.matches.minMatchScore,
+          channels: dto.channels
+            ? {
+                email:
+                  dto.channels.email ??
+                  current.categories.matches.channels.email,
+                push:
+                  dto.channels.push ??
+                  current.categories.matches.channels.push,
+                inApp:
+                  (dto.channels as { inApp?: boolean }).inApp ??
+                  current.categories.matches.channels.inApp,
+              }
+            : current.categories.matches.channels,
+        },
       },
     });
-    return toResponseDto(row);
+
+    const row = await this.prisma.matchAlertPreference.findUniqueOrThrow({
+      where: { userId: user.userId },
+    });
+
+    return {
+      enabled: updated.categories.matches.enabled,
+      minMatchScore: updated.categories.matches.minMatchScore,
+      channels: updated.categories.matches.channels,
+      lastNotifiedAt: row.lastNotifiedAt,
+      updatedAt: updated.updatedAt,
+    };
   }
 }

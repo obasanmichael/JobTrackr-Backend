@@ -29,4 +29,10 @@ export class UserProfileDto {
     description: 'IANA timezone for reminders and scheduled notifications.',
   })
   timezone!: string | null;
+
+  @ApiProperty({
+    enum: ['system', 'light', 'dark'],
+    description: 'UI theme preference; system follows device settings.',
+  })
+  themePreference!: string;
 }

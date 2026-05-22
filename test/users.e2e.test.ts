@@ -122,4 +122,26 @@ describe('Users (e2e)', () => {
         expect(body.timezone).toBeNull();
       });
   });
+
+  it('/api/v1/users/me PATCH updates theme preference', async () => {
+    const registerResponse = await request(app.getHttpServer())
+      .post('/api/v1/auth/register')
+      .send({
+        name: 'Theme User',
+        email: `users-theme-${Date.now()}@example.com`,
+        password: 'StrongPassword123',
+      })
+      .expect(201);
+
+    const token = registerResponse.body.accessToken as string;
+
+    await request(app.getHttpServer())
+      .patch('/api/v1/users/me')
+      .set(authHeader(token))
+      .send({ themePreference: 'dark' })
+      .expect(200)
+      .expect(({ body }: { body: Record<string, unknown> }) => {
+        expect(body.themePreference).toBe('dark');
+      });
+  });
 });

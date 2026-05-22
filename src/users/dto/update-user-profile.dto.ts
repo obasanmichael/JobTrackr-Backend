@@ -1,12 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  MaxLength,
-  MinLength,
-  ValidateIf,
-} from 'class-validator';
+import { IsIn, IsNotEmpty, IsOptional, IsString, MaxLength, MinLength, ValidateIf } from 'class-validator';
+import { THEME_PREFERENCES } from '../../common/utils/theme-preference.util';
 
 export class UpdateUserProfileDto {
   @ApiPropertyOptional({ example: 'Jane Doe' })
@@ -27,4 +21,16 @@ export class UpdateUserProfileDto {
   @IsString()
   @MaxLength(64)
   timezone?: string | null;
+
+  @ApiPropertyOptional({
+    nullable: true,
+    enum: THEME_PREFERENCES,
+    example: 'system',
+    description: 'UI theme preference. Pass null to reset to system.',
+  })
+  @IsOptional()
+  @ValidateIf((_obj, value) => value !== null)
+  @IsString()
+  @IsIn([...THEME_PREFERENCES])
+  themePreference?: string | null;
 }

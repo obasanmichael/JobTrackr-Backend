@@ -7,6 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import type { Prisma, User } from '@prisma/client';
 import { isValidIanaTimezone } from '../common/utils/iana-timezone.util';
+import { isValidThemePreference } from '../common/utils/theme-preference.util';
 import type { CurrentUser } from '../common/types/current-user.type';
 import { PrismaService } from '../prisma/prisma.service';
 import {
@@ -42,7 +43,8 @@ export class UsersService {
   ): Promise<UserProfileDto> {
     const hasName = dto.name !== undefined;
     const hasTimezone = dto.timezone !== undefined;
-    if (!hasName && !hasTimezone) {
+    const hasThemePreference = dto.themePreference !== undefined;
+    if (!hasName && !hasTimezone && !hasThemePreference) {
       throw new BadRequestException('At least one field must be provided.');
     }
 
@@ -64,6 +66,17 @@ export class UsersService {
         throw new BadRequestException('Invalid timezone.');
       } else {
         data.timezone = timezone;
+      }
+    }
+
+    if (hasThemePreference) {
+      const themePreference = dto.themePreference?.trim() ?? '';
+      if (!themePreference) {
+        data.themePreference = null;
+      } else if (!isValidThemePreference(themePreference)) {
+        throw new BadRequestException('Invalid theme preference.');
+      } else {
+        data.themePreference = themePreference;
       }
     }
 

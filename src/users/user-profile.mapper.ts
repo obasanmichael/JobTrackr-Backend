@@ -1,5 +1,6 @@
 import type { User } from '@prisma/client';
 import type { ConfigService } from '@nestjs/config';
+import { normalizeThemePreference } from '../common/utils/theme-preference.util';
 import { buildR2PublicObjectUrl } from '../storage/r2.config';
 import { UserProfileDto } from './dto/user-profile.dto';
 
@@ -15,6 +16,7 @@ export function toUserProfileDto(
     updatedAt: user.updatedAt,
     avatarUrl: null,
     timezone: user.timezone ?? null,
+    themePreference: normalizeThemePreference(user.themePreference),
   };
 
   if (!user.avatarStorageKey) {

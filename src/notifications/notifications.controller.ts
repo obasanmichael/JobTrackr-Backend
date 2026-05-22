@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Get,
   HttpCode,
@@ -24,6 +25,11 @@ import {
   NotificationUnreadCountResponseDto,
   NotificationsQueryDto,
 } from './dto/notification.dto';
+import {
+  NotificationPreferenceResponseDto,
+  UpdateNotificationPreferenceDto,
+} from './dto/notification-preference.dto';
+import { NotificationPreferenceService } from './notification-preference.service';
 import { NotificationsService } from './notifications.service';
 
 @Controller('notifications')
@@ -31,7 +37,29 @@ import { NotificationsService } from './notifications.service';
 @ApiTags('notifications')
 @ApiBearerAuth('access-token')
 export class NotificationsController {
-  constructor(private readonly notifications: NotificationsService) {}
+  constructor(
+    private readonly notifications: NotificationsService,
+    private readonly notificationPreferences: NotificationPreferenceService,
+  ) {}
+
+  @Get('preferences')
+  @ApiOperation({ summary: 'Get unified notification preferences' })
+  @ApiOkResponse({ type: NotificationPreferenceResponseDto })
+  getPreferences(
+    @CurrentUserDecorator() user: CurrentUser,
+  ): Promise<NotificationPreferenceResponseDto> {
+    return this.notificationPreferences.getOrDescribeDefaults(user);
+  }
+
+  @Patch('preferences')
+  @ApiOperation({ summary: 'Update unified notification preferences' })
+  @ApiOkResponse({ type: NotificationPreferenceResponseDto })
+  patchPreferences(
+    @CurrentUserDecorator() user: CurrentUser,
+    @Body() body: UpdateNotificationPreferenceDto,
+  ): Promise<NotificationPreferenceResponseDto> {
+    return this.notificationPreferences.upsert(user, body);
+  }
 
   @Get()
   @ApiOperation({ summary: 'List in-app notifications for current user' })

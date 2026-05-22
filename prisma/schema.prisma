@@ -21,6 +21,8 @@ model User {
   avatarUpdatedAt  DateTime?
   /// IANA timezone, e.g. America/New_York
   timezone         String?
+  /// UI theme: system | light | dark
+  themePreference  String?
   applications     JobApplication[]
   events           ApplicationEvent[]
   reminders        Reminder[]
@@ -44,6 +46,7 @@ model User {
   calendarIntegrations CalendarIntegration[]
   calendarEvents       CalendarEvent[]
   notifications        Notification[]
+  notificationPreference NotificationPreference?
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 }
@@ -541,6 +544,33 @@ model MatchAlertPreference {
   updatedAt DateTime @updatedAt
 
   @@map("match_alert_preferences")
+}
+
+/// Unified notification category preferences (matches, reminders, interviews).
+model NotificationPreference {
+  id         String   @id @default(uuid())
+  userId     String   @unique
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categories Json
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("notification_preferences")
+}
+
+/// Idempotency log for scheduled reminder/interview notifications.
+model NotificationDeliveryLog {
+  id          String   @id @default(uuid())
+  userId      String
+  sourceType  String
+  sourceId    String
+  channel     String
+  leadMinutes Int
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, sourceType, sourceId, channel, leadMinutes])
+  @@index([userId, createdAt])
+  @@map("notification_delivery_logs")
 }
 
 /// Product catalog (V2F).

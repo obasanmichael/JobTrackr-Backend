@@ -44,6 +44,24 @@ export class EmailService {
     });
   }
 
+  async sendNotificationEmail(input: {
+    to: string;
+    subject: string;
+    text: string;
+  }): Promise<void> {
+    const html = input.text
+      .split('\n')
+      .map((line) => `<p>${line}</p>`)
+      .join('');
+
+    await this.sendEmail({
+      to: input.to,
+      subject: input.subject,
+      text: input.text,
+      html,
+    });
+  }
+
   private async sendEmail(input: SendEmailInput): Promise<void> {
     const smtpHost = this.configService.get<string>('SMTP_HOST')?.trim();
     if (!smtpHost) {
