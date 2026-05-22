@@ -29,11 +29,29 @@ describe('DueNotificationsWorkerService', () => {
       },
     };
 
+    const configService = {
+      get: jest.fn((key: string) =>
+        key === 'NOTIFICATION_WORKER_ENABLED' ? 'true' : undefined,
+      ),
+    };
+
     const notificationPreferences = {
       getCategoriesForUser: jest.fn().mockResolvedValue({
-        matches: { enabled: false, minMatchScore: 70, channels: { email: false, push: false, inApp: true } },
-        reminders: { enabled: true, leadMinutes: [60], channels: { email: false, push: false, inApp: true } },
-        interviews: { enabled: false, leadMinutes: [60], channels: { email: false, push: false, inApp: true } },
+        matches: {
+          enabled: false,
+          minMatchScore: 70,
+          channels: { email: false, push: false, inApp: true },
+        },
+        reminders: {
+          enabled: true,
+          leadMinutes: [60],
+          channels: { email: false, push: false, inApp: true },
+        },
+        interviews: {
+          enabled: false,
+          leadMinutes: [60],
+          channels: { email: false, push: false, inApp: true },
+        },
       }),
     };
 
@@ -47,6 +65,7 @@ describe('DueNotificationsWorkerService', () => {
 
     const worker = new DueNotificationsWorkerService(
       prisma as never,
+      configService as never,
       notificationPreferences as never,
       notifications as never,
       emailService as never,
@@ -54,6 +73,7 @@ describe('DueNotificationsWorkerService', () => {
 
     const result = await worker.runDueChecks(new Date());
 
+    expect(result.enabled).toBe(true);
     expect(result.remindersSent).toBe(1);
     expect(notifications.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -61,5 +81,25 @@ describe('DueNotificationsWorkerService', () => {
         userId: 'user-1',
       }),
     );
+  });
+
+  it('skips when worker is disabled', async () => {
+    const configService = {
+      get: jest.fn(() => undefined),
+    };
+    const worker = new DueNotificationsWorkerService(
+      { user: { findMany: jest.fn() } } as never,
+      configService as never,
+      { getCategoriesForUser: jest.fn() } as never,
+      { create: jest.fn() } as never,
+      { sendNotificationEmail: jest.fn() } as never,
+    );
+
+    const result = await worker.runDueChecks(new Date());
+    expect(result).toEqual({
+      enabled: false,
+      remindersSent: 0,
+      interviewsSent: 0,
+    });
   });
 });

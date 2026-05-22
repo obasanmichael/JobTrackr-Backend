@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { NotificationType, type Prisma } from '@prisma/client';
 import { EmailService } from '../email/email.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -8,6 +9,7 @@ import { NotificationsService } from './notifications.service';
 const DELIVERY_WINDOW_MS = 15 * 60 * 1000;
 
 export type DueNotificationRunResult = {
+  enabled: boolean;
   remindersSent: number;
   interviewsSent: number;
 };
@@ -18,13 +20,24 @@ export class DueNotificationsWorkerService {
 
   constructor(
     private readonly prisma: PrismaService,
+    private readonly configService: ConfigService,
     private readonly notificationPreferences: NotificationPreferenceService,
     private readonly notifications: NotificationsService,
     private readonly emailService: EmailService,
   ) {}
 
   async runDueChecks(now = new Date()): Promise<DueNotificationRunResult> {
+    if (!this.isWorkerEnabled()) {
+      this.logger.debug('Due notification worker skipped (disabled).');
+      return {
+        enabled: false,
+        remindersSent: 0,
+        interviewsSent: 0,
+      };
+    }
+
     const result: DueNotificationRunResult = {
+      enabled: true,
       remindersSent: 0,
       interviewsSent: 0,
     };
@@ -320,5 +333,14 @@ export class DueNotificationsWorkerService {
       return hours === 1 ? '1 hour' : `${hours} hours`;
     }
     return minutes === 1 ? '1 minute' : `${minutes} minutes`;
+  }
+
+  private isWorkerEnabled(): boolean {
+    const raw = this.configService.get<string>('NOTIFICATION_WORKER_ENABLED');
+    if (!raw?.trim()) {
+      return false;
+    }
+    const normalized = raw.trim().toLowerCase();
+    return normalized === 'true' || normalized === '1' || normalized === 'yes';
   }
 }

@@ -42,6 +42,8 @@ type EnvVars = {
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_CLIENT_SECRET?: string;
   GOOGLE_CALENDAR_REDIRECT_URI?: string;
+  CRON_SECRET?: string;
+  NOTIFICATION_WORKER_ENABLED?: string;
 };
 
 const ALLOWED_NODE_ENVS: NodeEnv[] = ['development', 'test', 'production'];
@@ -301,6 +303,19 @@ export function validateEnv(config: EnvVars): EnvVars {
         'FRONTEND_URL is required when Google Calendar OAuth is configured.',
       );
     }
+  }
+
+  const notificationWorkerEnabled = ['true', '1', 'yes'].includes(
+    config.NOTIFICATION_WORKER_ENABLED?.trim().toLowerCase() ?? '',
+  );
+  if (
+    notificationWorkerEnabled &&
+    config.NODE_ENV === 'production' &&
+    !config.CRON_SECRET?.trim()
+  ) {
+    errors.push(
+      'CRON_SECRET is required when NOTIFICATION_WORKER_ENABLED is true in production.',
+    );
   }
 
   if (errors.length > 0) {

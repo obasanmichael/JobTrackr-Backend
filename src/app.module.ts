@@ -12,6 +12,7 @@ import { validateEnv } from './config/env.validation';
 import { CryptoModule } from './crypto/crypto.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { HealthModule } from './health/health.module';
+import { InternalModule } from './internal/internal.module';
 import { InterviewsModule } from './interviews/interviews.module';
 import { JobSourcesModule } from './job-sources/job-sources.module';
 import { JobMatchingModule } from './job-matching/job-matching.module';
@@ -70,6 +71,7 @@ import { UsersModule } from './users/users.module';
     InterviewsModule,
     CalendarModule,
     NotificationsModule,
+    InternalModule,
     DashboardModule,
   ],
   providers: [
