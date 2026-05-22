@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { NotificationType } from '@prisma/client';
+import { NotificationType, type Prisma } from '@prisma/client';
 import { EmailService } from '../email/email.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationPreferenceService } from './notification-preference.service';
@@ -245,7 +245,7 @@ export class DueNotificationsWorkerService {
           type: input.type,
           title: input.title,
           message: input.message,
-          metadata: input.metadata,
+          metadata: input.metadata as Prisma.InputJsonValue,
         });
         await this.recordDelivery(
           input.user.id,

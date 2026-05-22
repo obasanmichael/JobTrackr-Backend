@@ -139,9 +139,15 @@ export function normalizeCategories(value: unknown): NotificationCategories {
 export function mergeCategories(
   current: NotificationCategories,
   patch: Partial<{
-    matches: Partial<MatchCategoryPreference>;
-    reminders: Partial<TimedCategoryPreference>;
-    interviews: Partial<TimedCategoryPreference>;
+    matches: Partial<Omit<MatchCategoryPreference, 'channels'>> & {
+      channels?: Partial<NotificationChannels>;
+    };
+    reminders: Partial<Omit<TimedCategoryPreference, 'channels'>> & {
+      channels?: Partial<NotificationChannels>;
+    };
+    interviews: Partial<Omit<TimedCategoryPreference, 'channels'>> & {
+      channels?: Partial<NotificationChannels>;
+    };
   }>,
 ): NotificationCategories {
   return normalizeCategories({
