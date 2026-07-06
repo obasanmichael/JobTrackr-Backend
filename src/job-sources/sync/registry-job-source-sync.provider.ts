@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import type { JobSource } from '@prisma/client';
+import { AdzunaJobSourceSyncProvider } from './adzuna-job-source-sync.provider';
 import { GreenhouseJobSourceSyncProvider } from './greenhouse-job-source-sync.provider';
 import { LeverJobSourceSyncProvider } from './lever-job-source-sync.provider';
 import { NoopJobSourceSyncProvider } from './noop-job-source-sync.provider';
@@ -24,6 +25,7 @@ export class RegistryJobSourceSyncProvider implements JobSourceSyncPort {
     private readonly noop: NoopJobSourceSyncProvider,
     private readonly greenhouse: GreenhouseJobSourceSyncProvider,
     private readonly lever: LeverJobSourceSyncProvider,
+    private readonly adzuna: AdzunaJobSourceSyncProvider,
   ) {}
 
   fetchSnapshot(source: SourceSubset): Promise<JobSourceSyncFetchResult> {
@@ -34,6 +36,8 @@ export class RegistryJobSourceSyncProvider implements JobSourceSyncPort {
         return this.greenhouse.fetchSnapshot(source);
       case 'LEVER':
         return this.lever.fetchSnapshot(source);
+      case 'ADZUNA':
+        return this.adzuna.fetchSnapshot(source);
       default:
         return this.noop.fetchSnapshot(source);
     }

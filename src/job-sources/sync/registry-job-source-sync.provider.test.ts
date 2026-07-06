@@ -1,4 +1,5 @@
 import { RegistryJobSourceSyncProvider } from './registry-job-source-sync.provider';
+import { AdzunaJobSourceSyncProvider } from './adzuna-job-source-sync.provider';
 import { GreenhouseJobSourceSyncProvider } from './greenhouse-job-source-sync.provider';
 import { LeverJobSourceSyncProvider } from './lever-job-source-sync.provider';
 import { NoopJobSourceSyncProvider } from './noop-job-source-sync.provider';
@@ -21,6 +22,7 @@ describe('RegistryJobSourceSyncProvider', () => {
   let noop: jest.Mocked<Pick<NoopJobSourceSyncProvider, 'fetchSnapshot'>>;
   let gh: jest.Mocked<Pick<GreenhouseJobSourceSyncProvider, 'fetchSnapshot'>>;
   let lev: jest.Mocked<Pick<LeverJobSourceSyncProvider, 'fetchSnapshot'>>;
+  let adz: jest.Mocked<Pick<AdzunaJobSourceSyncProvider, 'fetchSnapshot'>>;
 
   beforeEach(() => {
     noop = {
@@ -32,10 +34,21 @@ describe('RegistryJobSourceSyncProvider', () => {
     lev = {
       fetchSnapshot: jest.fn().mockResolvedValue({ rawListings: ['lv'] }),
     };
+    adz = {
+      fetchSnapshot: jest.fn().mockResolvedValue({ rawListings: ['adz'] }),
+    };
   });
 
+  const build = () =>
+    new RegistryJobSourceSyncProvider(
+      noop as never,
+      gh as never,
+      lev as never,
+      adz as never,
+    );
+
   it('delegates to Greenhouse when board_token resolves', async () => {
-    const registry = new RegistryJobSourceSyncProvider(noop, gh, lev);
+    const registry = build();
 
     await registry.fetchSnapshot(
       source({ config: { board_token: 't' } }) as Parameters<
@@ -48,7 +61,7 @@ describe('RegistryJobSourceSyncProvider', () => {
   });
 
   it('delegates to Lever when site slug resolves', async () => {
-    const registry = new RegistryJobSourceSyncProvider(noop, gh, lev);
+    const registry = build();
 
     await registry.fetchSnapshot(
       source({
@@ -61,7 +74,7 @@ describe('RegistryJobSourceSyncProvider', () => {
   });
 
   it('falls back to noop when provider unknown', async () => {
-    const registry = new RegistryJobSourceSyncProvider(noop, gh, lev);
+    const registry = build();
 
     await registry.fetchSnapshot(
       source({

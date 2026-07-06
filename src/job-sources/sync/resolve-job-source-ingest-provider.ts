@@ -1,5 +1,5 @@
 /** Which concrete ATS ingest adapter handles a JobSource row. */
-export type JobSourceIngestProviderKind = 'GREENHOUSE' | 'LEVER';
+export type JobSourceIngestProviderKind = 'GREENHOUSE' | 'LEVER' | 'ADZUNA';
 
 /**
  * Pick an ingest implementation from **`JobSource.config`**.
@@ -20,6 +20,8 @@ export function resolveJobSourceIngestProvider(
         return 'GREENHOUSE';
       case 'LEVER':
         return 'LEVER';
+      case 'ADZUNA':
+        return 'ADZUNA';
       default:
         return null;
     }

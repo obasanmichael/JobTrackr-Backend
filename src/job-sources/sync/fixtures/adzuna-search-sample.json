@@ -1,0 +1,48 @@
+{
+  "count": 2,
+  "mean": 38252.34,
+  "results": [
+    {
+      "id": "5088148098",
+      "title": "Registered <strong>Pharmacist</strong> - Community Pharmacy",
+      "description": "We are looking for a Registered <strong>Pharmacist</strong> to join our community pharmacy team in Manchester. You will dispense prescriptions, advise patients and manage stock ...",
+      "redirect_url": "https://www.adzuna.co.uk/jobs/land/ad/5088148098?se=abc&utm_medium=api",
+      "company": {
+        "display_name": "Boots  UK"
+      },
+      "location": {
+        "display_name": "Manchester, Greater Manchester",
+        "area": ["UK", "North West England", "Greater Manchester", "Manchester"]
+      },
+      "salary_min": 42000,
+      "salary_max": 48000.75,
+      "salary_is_predicted": "0",
+      "contract_type": "permanent",
+      "contract_time": "full_time",
+      "created": "2026-07-01T09:15:30Z",
+      "category": {
+        "label": "Healthcare & Nursing Jobs",
+        "tag": "healthcare-nursing-jobs"
+      }
+    },
+    {
+      "id": "5088211334",
+      "title": "Site Engineer (Civil)",
+      "description": "Site Engineer required for infrastructure projects ...",
+      "redirect_url": "https://www.adzuna.co.uk/jobs/land/ad/5088211334",
+      "company": {},
+      "location": {
+        "display_name": "Leeds, West Yorkshire"
+      },
+      "salary_min": 45000,
+      "salary_max": 55000,
+      "salary_is_predicted": "1",
+      "contract_type": "contract",
+      "created": "not-a-date",
+      "category": {
+        "label": "Engineering Jobs",
+        "tag": "engineering-jobs"
+      }
+    }
+  ]
+}
