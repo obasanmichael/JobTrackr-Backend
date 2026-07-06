@@ -15,6 +15,12 @@ export class PrismaService
 
     super({
       adapter: new PrismaPg({ connectionString }),
+      transactionOptions: {
+        // Remote Postgres (Neon) round-trip latency makes 50-statement
+        // ingest batches exceed the 5s default.
+        maxWait: 10_000,
+        timeout: 30_000,
+      },
     });
   }
 
