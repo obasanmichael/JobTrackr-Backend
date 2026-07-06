@@ -13,6 +13,7 @@ import {
 
 describe('job-match-scoring', () => {
   const profile = {
+    headline: 'Senior Software Engineer',
     skills: ['React', 'TypeScript', 'Node.js'],
     tools: ['PostgreSQL'],
     roles: ['Software Engineer'],
@@ -82,6 +83,7 @@ describe('job-match-scoring', () => {
 
   it('maps prisma records into scoring inputs', () => {
     const mappedProfile = profileInputFromRecord({
+      headline: null,
       skills: ['React'],
       tools: null,
       roles: ['Engineer'],

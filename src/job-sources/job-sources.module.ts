@@ -11,6 +11,7 @@ import { JobIngestOrchestrationService } from './job-ingest-orchestration.servic
 import { JobSourceSubmissionsController } from './job-source-submissions.controller';
 import { JobSourceSubmissionsService } from './job-source-submissions.service';
 import { JobSourcesService } from './job-sources.service';
+import { AdzunaJobSourceSyncProvider } from './sync/adzuna-job-source-sync.provider';
 import { GreenhouseJobSourceSyncProvider } from './sync/greenhouse-job-source-sync.provider';
 import { LeverJobSourceSyncProvider } from './sync/lever-job-source-sync.provider';
 import { NoopJobSourceSyncProvider } from './sync/noop-job-source-sync.provider';
@@ -35,6 +36,7 @@ import { JOB_SOURCE_SYNC_PORT } from './sync/job-source-sync.tokens';
     NoopJobSourceSyncProvider,
     GreenhouseJobSourceSyncProvider,
     LeverJobSourceSyncProvider,
+    AdzunaJobSourceSyncProvider,
     RegistryJobSourceSyncProvider,
     {
       provide: JOB_SOURCE_SYNC_PORT,

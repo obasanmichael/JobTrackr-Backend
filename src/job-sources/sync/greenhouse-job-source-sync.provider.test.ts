@@ -56,6 +56,24 @@ describe('Greenhouse ingest', () => {
       expect(parseGenericJobListing(mapped).ok).toBe(true);
     });
 
+    it('decodes escaped HTML content into a plain-text description', () => {
+      const mapped = mapGreenhouseJobToGenericListing(
+        {
+          id: 2,
+          title: 'T',
+          absolute_url: 'https://jobs.example/2',
+          content:
+            '&lt;p&gt;Build with &lt;strong&gt;TypeScript&lt;/strong&gt; &amp;amp; Node.js&lt;/p&gt;&lt;ul&gt;&lt;li&gt;5+ years&lt;/li&gt;&lt;/ul&gt;',
+        },
+        'Src',
+      );
+
+      expect(mapped.description).toContain('TypeScript');
+      expect(mapped.description).toContain('& Node.js');
+      expect(mapped.description).not.toContain('<');
+      expect(parseGenericJobListing(mapped).ok).toBe(true);
+    });
+
     it('throws config errors from provider when token missing', async () => {
       const provider = new GreenhouseJobSourceSyncProvider();
       await expect(
@@ -86,7 +104,9 @@ describe('Greenhouse ingest', () => {
       expect(mockedGet.mock.calls[0]?.[0]).toBe(
         'https://boards-api.greenhouse.io/v1/boards/example_board/jobs',
       );
-      expect(mockedGet.mock.calls[0]?.[1]).toMatchObject({ params: {} });
+      expect(mockedGet.mock.calls[0]?.[1]).toMatchObject({
+        params: { content: 'true' },
+      });
 
       expect(result.rawListings).toHaveLength(1);
 

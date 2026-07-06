@@ -12,10 +12,39 @@ import type {
   JobSourceSyncPort,
 } from './job-source-sync.port';
 
-/** Shape for `GET …/boards/{token}/jobs` (no `content` query). */
+/** Shape for `GET …/boards/{token}/jobs?content=true`. */
 const greenhouseJobsListSchema = z.object({
   jobs: z.array(z.record(z.string(), z.unknown())),
 });
+
+const DESCRIPTION_MAX_CHARS = 250_000;
+
+function decodeHtmlEntities(value: string): string {
+  return value
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&');
+}
+
+/**
+ * Greenhouse `content` is HTML-escaped HTML (entities escaped twice for text):
+ * decode once to recover the markup, strip tags, then decode the text's own
+ * entities.
+ */
+export function greenhouseContentToPlainText(content: string): string {
+  const html = decodeHtmlEntities(content);
+  const text = html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(p|div|li|h[1-6])>/gi, '\n')
+    .replace(/<[^>]+>/g, ' ');
+  return decodeHtmlEntities(text)
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\s*\n\s*/g, '\n')
+    .trim();
+}
 
 type SourceSubset = Pick<
   JobSource,
@@ -69,6 +98,18 @@ export function mapGreenhouseJobToGenericListing(
     parseIsoOptional(job['first_published']) ??
     parseIsoOptional(job['updated_at']);
 
+  const contentRaw = job['content'];
+  let description: string | undefined;
+  if (typeof contentRaw === 'string' && contentRaw.trim()) {
+    const plain = greenhouseContentToPlainText(contentRaw);
+    if (plain) {
+      description =
+        plain.length <= DESCRIPTION_MAX_CHARS
+          ? plain
+          : `${plain.slice(0, DESCRIPTION_MAX_CHARS - 1)}…`;
+    }
+  }
+
   return {
     externalJobId,
     title,
@@ -76,6 +117,7 @@ export function mapGreenhouseJobToGenericListing(
     ...(applicationUrl != null ? { applicationUrl } : {}),
     ...(locationName ? { location: locationName } : {}),
     ...(postedAt != null ? { postedAt } : {}),
+    ...(description ? { description } : {}),
   };
 }
 
@@ -127,7 +169,9 @@ export class GreenhouseJobSourceSyncProvider implements JobSourceSyncPort {
     const response = await axios.get<unknown>(url, {
       timeout: JOB_INGEST_AXIOS_TIMEOUT_MS,
       headers: { 'User-Agent': JOB_INGEST_USER_AGENT },
-      params: {},
+      // content=true includes each posting's full HTML description, which
+      // job matching needs as its skill-scoring corpus.
+      params: { content: 'true' },
       validateStatus: (status) => status === 200,
     });
 

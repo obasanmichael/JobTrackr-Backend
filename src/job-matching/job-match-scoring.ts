@@ -1,6 +1,7 @@
 import { ExternalExperienceLevel, ExternalJobRemoteType } from '@prisma/client';
 
 export type MatchProfileInput = {
+  headline: string | null;
   roles: string[];
   skills: string[];
   tools: string[];
@@ -68,7 +69,13 @@ export function scoreTitleMatch(
     return 0;
   }
 
-  const roleHints = [...profile.roles, ...profile.skills.slice(0, 5)];
+  // The resume headline (e.g. "Senior Software Engineer") is usually the
+  // strongest target-role signal; extractor-derived roles are often empty.
+  const roleHints = [
+    ...(profile.headline?.trim() ? [profile.headline] : []),
+    ...profile.roles,
+    ...profile.skills.slice(0, 5),
+  ];
   if (roleHints.length === 0) {
     return 40;
   }
@@ -345,6 +352,7 @@ export function scoreJobMatch(
 }
 
 export function profileInputFromRecord(input: {
+  headline?: string | null;
   skills: unknown;
   tools: unknown;
   roles: unknown;
@@ -353,6 +361,10 @@ export function profileInputFromRecord(input: {
   yearsOfExperience: number | null;
 }): MatchProfileInput {
   return {
+    headline:
+      typeof input.headline === 'string' && input.headline.trim()
+        ? input.headline.trim()
+        : null,
     skills: parseProfileStringArray(input.skills),
     tools: parseProfileStringArray(input.tools),
     roles: parseProfileStringArray(input.roles),
