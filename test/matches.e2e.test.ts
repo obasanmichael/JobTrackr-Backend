@@ -178,7 +178,12 @@ describe('Matches (e2e)', () => {
 
     expect(response.body.enabled).toBe(false);
     expect(response.body.minMatchScore).toBe(70);
-    expect(response.body.channels).toBeNull();
+    // Unified notification prefs default all channels (email/inApp on).
+    expect(response.body.channels).toEqual({
+      email: true,
+      inApp: true,
+      push: false,
+    });
   });
 
   it('persists alert preferences via PATCH', async () => {
@@ -198,7 +203,12 @@ describe('Matches (e2e)', () => {
       .expect(({ body }: { body: Record<string, unknown> }) => {
         expect(body.enabled).toBe(true);
         expect(body.minMatchScore).toBe(80);
-        expect(body.channels).toEqual({ email: true, push: false });
+        // Channels merge over defaults; inApp stays on unless disabled.
+        expect(body.channels).toEqual({
+          email: true,
+          inApp: true,
+          push: false,
+        });
       });
 
     await request(app.getHttpServer())
