@@ -47,6 +47,7 @@ export class ExternalJobQualityService {
         applicationUrl: true,
         salaryMin: true,
         salaryMax: true,
+        currency: true,
         contentHash: true,
       },
     });

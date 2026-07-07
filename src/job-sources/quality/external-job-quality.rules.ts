@@ -9,6 +9,7 @@ export type ExternalJobQualityInput = {
   applicationUrl: string | null;
   salaryMin: number | null;
   salaryMax: number | null;
+  currency: string | null;
   contentHash: string | null;
 };
 
@@ -29,6 +30,7 @@ export function isValidApplicationUrl(
 export function detectSalaryOutlier(
   salaryMin: number | null,
   salaryMax: number | null,
+  currency: string | null = 'USD',
   maxAllowed = JOB_QUALITY_SALARY_MAX_USD,
 ): boolean {
   const values = [salaryMin, salaryMax].filter(
@@ -43,7 +45,11 @@ export function detectSalaryOutlier(
     return true;
   }
 
-  if (values.some((value) => value > maxAllowed)) {
+  // The max threshold is denominated in USD; a normal salary in e.g. INR or
+  // ZAR would trip it. Only apply the ceiling to USD (or unknown) currencies.
+  const usdComparable =
+    currency == null || currency.trim().toUpperCase() === 'USD';
+  if (usdComparable && values.some((value) => value > maxAllowed)) {
     return true;
   }
 
@@ -86,7 +92,7 @@ export function evaluateExternalJobQuality(
     flags.push(EXTERNAL_JOB_QUALITY_FLAGS.INVALID_APPLICATION_URL);
   }
 
-  if (detectSalaryOutlier(job.salaryMin, job.salaryMax)) {
+  if (detectSalaryOutlier(job.salaryMin, job.salaryMax, job.currency)) {
     flags.push(EXTERNAL_JOB_QUALITY_FLAGS.SALARY_OUTLIER);
   }
 

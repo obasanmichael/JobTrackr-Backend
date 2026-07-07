@@ -22,6 +22,16 @@ describe('external-job-quality.rules', () => {
     expect(detectSalaryOutlier(100000, 1_000_000)).toBe(true);
   });
 
+  it('only applies the USD max threshold to USD salaries', () => {
+    // 2.5M INR is a normal salary, not an outlier.
+    expect(detectSalaryOutlier(2_000_000, 2_500_000, 'INR')).toBe(false);
+    expect(detectSalaryOutlier(2_000_000, 2_500_000, 'USD')).toBe(true);
+    expect(detectSalaryOutlier(2_000_000, 2_500_000, null)).toBe(true);
+    // Negative and inverted ranges stay flagged regardless of currency.
+    expect(detectSalaryOutlier(-1, 100, 'INR')).toBe(true);
+    expect(detectSalaryOutlier(500, 100, 'INR')).toBe(true);
+  });
+
   it('flags missing URL, invalid URL, salary, and duplicate hash', () => {
     const rows = [
       {
@@ -29,6 +39,7 @@ describe('external-job-quality.rules', () => {
         applicationUrl: null,
         salaryMin: null,
         salaryMax: null,
+        currency: null,
         contentHash: 'dup',
       },
       {
@@ -36,6 +47,7 @@ describe('external-job-quality.rules', () => {
         applicationUrl: 'not-a-url',
         salaryMin: 200000,
         salaryMax: 100000,
+        currency: 'USD',
         contentHash: 'dup',
       },
       {
@@ -43,6 +55,7 @@ describe('external-job-quality.rules', () => {
         applicationUrl: 'https://jobs.example/ok',
         salaryMin: 100000,
         salaryMax: 120000,
+        currency: 'USD',
         contentHash: 'unique',
       },
     ];
