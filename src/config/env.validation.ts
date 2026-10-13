@@ -33,11 +33,8 @@ type EnvVars = {
   R2_BUCKET_NAME?: string;
   R2_PUBLIC_URL?: string;
   PASSWORD_RESET_TTL_HOURS?: string;
-  SMTP_HOST?: string;
-  SMTP_PORT?: string;
-  SMTP_USER?: string;
-  SMTP_PASS?: string;
-  SMTP_FROM?: string;
+  RESEND_API_KEY?: string;
+  EMAIL_FROM?: string;
   ENCRYPTION_KEY?: string;
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_CLIENT_SECRET?: string;
@@ -253,10 +250,6 @@ export function validateEnv(config: EnvVars): EnvVars {
     errors.push('PASSWORD_RESET_TTL_HOURS must be a valid number.');
   } else if (Number(config.PASSWORD_RESET_TTL_HOURS) <= 0) {
     errors.push('PASSWORD_RESET_TTL_HOURS must be greater than zero.');
-  }
-
-  if (config.SMTP_PORT?.trim() && !/^\d+$/.test(config.SMTP_PORT.trim())) {
-    errors.push('SMTP_PORT must be a valid number.');
   }
 
   if (!config.ENCRYPTION_KEY?.trim()) {
