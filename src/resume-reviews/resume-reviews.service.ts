@@ -149,7 +149,10 @@ export class ResumeReviewsService {
       }
 
       if (error instanceof AiInvocationError) {
-        throw new BadGatewayException(error.message, { cause: error });
+        throw new BadGatewayException(
+          'The AI review service is temporarily unavailable. Please try again later.',
+          { cause: error },
+        );
       }
 
       if (error instanceof StructuredResumeReviewValidationError) {
