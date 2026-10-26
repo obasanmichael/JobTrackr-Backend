@@ -33,9 +33,12 @@ RUN npx prisma generate
 
 COPY --from=build /app/dist ./dist
 
-# Resume uploads are written under ./var, so the non-root user must own it
+# Resume uploads are written under ./var (or a mounted volume). The entrypoint
+# fixes ownership at start-up, then runs the server as the non-root "node" user.
 RUN mkdir -p var/jobtrackr-resumes && chown -R node:node /app/var
-USER node
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 EXPOSE 4000
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["node", "dist/main"]
