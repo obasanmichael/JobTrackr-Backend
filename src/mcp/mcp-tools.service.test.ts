@@ -6,6 +6,8 @@ describe('McpToolsService', () => {
   let events: Record<string, jest.Mock>;
   let interviews: Record<string, jest.Mock>;
   let service: McpToolsService;
+  let prisma: { $transaction: jest.Mock };
+  let executeRaw: jest.Mock;
 
   const app = (overrides = {}) => ({
     id: 'app-1',
@@ -46,10 +48,17 @@ describe('McpToolsService', () => {
       findUpcoming: jest.fn(),
       findExisting: jest.fn().mockResolvedValue(null),
     };
+    executeRaw = jest.fn().mockResolvedValue(1);
+    prisma = {
+      $transaction: jest.fn((fn: (tx: unknown) => unknown) =>
+        fn({ $executeRaw: executeRaw }),
+      ),
+    };
     service = new McpToolsService(
       applications as never,
       events as never,
       interviews as never,
+      prisma as never,
     );
   });
 
@@ -176,6 +185,21 @@ describe('McpToolsService', () => {
       expect(applications.create.mock.calls[0][1].currency).toBe('USD');
     });
 
+    it('takes a per-application advisory lock around find-then-create', async () => {
+      applications.findByCompanyAndTitle.mockResolvedValue(null);
+      applications.create.mockResolvedValue(app());
+
+      await service.logApplication(user, {
+        companyName: ' Acme ',
+        jobTitle: 'Backend Engineer',
+      });
+
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(executeRaw).toHaveBeenCalledTimes(1);
+      const lockKey = executeRaw.mock.calls[0][1];
+      expect(lockKey).toBe('user-1|acme|backend engineer');
+    });
+
     it('promotes a SAVED application to APPLIED', async () => {
       applications.findByCompanyAndTitle.mockResolvedValue(
         app({ status: 'SAVED' }),
@@ -196,7 +220,7 @@ describe('McpToolsService', () => {
       applicationId: 'app-1',
       stage: 'TECHNICAL_INTERVIEW' as const,
       interviewType: 'VIDEO' as const,
-      scheduledAt: new Date('2026-11-10T15:00:00Z'),
+      scheduledAt: new Date(Date.now() + 7 * 86_400_000),
     };
 
     beforeEach(() => {
@@ -235,6 +259,17 @@ describe('McpToolsService', () => {
         expect(applications.update).not.toHaveBeenCalled();
       },
     );
+
+    it('rejects past dates without touching the database', async () => {
+      await expect(
+        service.scheduleInterview(user, {
+          ...input,
+          scheduledAt: new Date(Date.now() - 60_000),
+        }),
+      ).rejects.toThrow('in the past');
+      expect(applications.findOne).not.toHaveBeenCalled();
+      expect(interviews.create).not.toHaveBeenCalled();
+    });
 
     it('does not write anything when the application is not owned', async () => {
       applications.findOne.mockRejectedValue(

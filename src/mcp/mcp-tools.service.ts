@@ -13,6 +13,7 @@ import type {
   InterviewType,
 } from '../interviews/dto/interview.enums';
 import { InterviewsService } from '../interviews/interviews.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 /** Forward-progress order; terminal statuses are never auto-advanced from. */
 const STATUS_RANK: Record<ApplicationStatus, number> = {
@@ -74,6 +75,7 @@ export class McpToolsService {
     private readonly applicationsService: ApplicationsService,
     private readonly applicationEventsService: ApplicationEventsService,
     private readonly interviewsService: InterviewsService,
+    private readonly prismaService: PrismaService,
   ) {}
 
   async logApplication(currentUser: CurrentUser, input: LogApplicationInput) {
@@ -87,6 +89,25 @@ export class McpToolsService {
       );
     }
 
+    // Serialize concurrent calls for the same user + company + title so the
+    // find-then-create below cannot race into a duplicate. A transaction-scoped
+    // advisory lock works across server instances and does not constrain the
+    // REST API, which legitimately allows re-applying to the same role.
+    const lockKey = [
+      currentUser.userId,
+      input.companyName.trim().toLowerCase(),
+      input.jobTitle.trim().toLowerCase(),
+    ].join('|');
+    return this.prismaService.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${lockKey}, 0))`;
+      return this.logApplicationLocked(currentUser, input);
+    });
+  }
+
+  private async logApplicationLocked(
+    currentUser: CurrentUser,
+    input: LogApplicationInput,
+  ) {
     const existing = await this.applicationsService.findByCompanyAndTitle(
       currentUser,
       input.companyName,
@@ -179,6 +200,12 @@ export class McpToolsService {
     currentUser: CurrentUser,
     input: ScheduleInterviewInput,
   ) {
+    if (input.scheduledAt.getTime() < Date.now()) {
+      throw new BadRequestException(
+        'scheduledAt is in the past. Use add_application_note to record an interview that already happened.',
+      );
+    }
+
     // Ownership check first, so nothing is written for an unknown application.
     const application = await this.applicationsService.findOne(
       currentUser,

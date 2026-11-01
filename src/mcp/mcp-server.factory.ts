@@ -124,7 +124,7 @@ export class McpServerFactory {
       'schedule_interview',
       {
         description:
-          'Record an upcoming interview and advance the application status if appropriate (never downgrades). scheduledAt must be ISO 8601 with a timezone offset.',
+          'Record an upcoming interview and advance the application status if appropriate (never downgrades). scheduledAt must be in the future, as ISO 8601 with a timezone offset. Calling it again with the same application, stage and time returns the existing interview.',
         inputSchema: {
           applicationId: z.string().uuid(),
           stage: z.enum(InterviewStage),

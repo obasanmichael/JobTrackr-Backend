@@ -230,6 +230,45 @@ describe('MCP server (e2e)', () => {
     expect(await prismaService.interview.count()).toBe(1);
   });
 
+  it('does not create duplicates when the same application is logged concurrently', async () => {
+    const user = await registerUser(`race-${Date.now()}@example.com`);
+    const { token } = await createApiToken(user.accessToken);
+
+    const results = await Promise.all(
+      Array.from({ length: 6 }, () =>
+        callTool(token, 'log_application', {
+          companyName: 'Race Co',
+          jobTitle: 'Engineer',
+        }),
+      ),
+    );
+
+    expect(await prismaService.jobApplication.count()).toBe(1);
+    expect(results.filter((r) => r.data.action === 'created')).toHaveLength(1);
+  });
+
+  it('rejects interviews scheduled in the past', async () => {
+    const user = await registerUser(`past-${Date.now()}@example.com`);
+    const { token } = await createApiToken(user.accessToken);
+    const logged = await callTool(token, 'log_application', {
+      companyName: 'Acme Labs',
+      jobTitle: 'Backend Engineer',
+    });
+
+    const response = await rpc(token, 'tools/call', {
+      name: 'schedule_interview',
+      arguments: {
+        applicationId: logged.data.application.id,
+        stage: 'OTHER',
+        interviewType: 'VIDEO',
+        scheduledAt: '2020-01-01T10:00:00Z',
+      },
+    }).expect(200);
+
+    expect(response.body.result.isError).toBe(true);
+    expect(await prismaService.interview.count()).toBe(0);
+  });
+
   it('reports tool failures as isError results, not protocol errors', async () => {
     const user = await registerUser(`err-${Date.now()}@example.com`);
     const { token } = await createApiToken(user.accessToken);
