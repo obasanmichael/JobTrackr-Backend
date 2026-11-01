@@ -14,6 +14,7 @@ import type {
 } from '../interviews/dto/interview.enums';
 import { InterviewsService } from '../interviews/interviews.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { Semaphore } from './semaphore';
 
 /** Forward-progress order; terminal statuses are never auto-advanced from. */
 const STATUS_RANK: Record<ApplicationStatus, number> = {
@@ -39,6 +40,13 @@ const STAGE_TO_STATUS: Record<InterviewStage, ApplicationStatus | null> = {
 };
 
 const MAX_RESULTS = 50;
+
+/**
+ * Each lock transaction pins a pooled connection while the work inside it uses
+ * others, so unbounded concurrency could exhaust the pool (pg default: 10) and
+ * deadlock. Keep this well below the pool size.
+ */
+const MAX_CONCURRENT_LOCKS = 3;
 
 export type LogApplicationInput = {
   companyName: string;
@@ -70,6 +78,7 @@ export type ScheduleInterviewInput = {
 @Injectable()
 export class McpToolsService {
   private readonly logger = new Logger(McpToolsService.name);
+  private readonly lockSlots = new Semaphore(MAX_CONCURRENT_LOCKS);
 
   constructor(
     private readonly applicationsService: ApplicationsService,
@@ -98,10 +107,12 @@ export class McpToolsService {
       input.companyName.trim().toLowerCase(),
       input.jobTitle.trim().toLowerCase(),
     ].join('|');
-    return this.prismaService.$transaction(async (tx) => {
-      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${lockKey}, 0))`;
-      return this.logApplicationLocked(currentUser, input);
-    });
+    return this.lockSlots.run(() =>
+      this.prismaService.$transaction(async (tx) => {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${lockKey}, 0))`;
+        return this.logApplicationLocked(currentUser, input);
+      }),
+    );
   }
 
   private async logApplicationLocked(

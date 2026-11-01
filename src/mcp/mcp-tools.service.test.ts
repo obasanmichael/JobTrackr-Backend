@@ -200,6 +200,37 @@ describe('McpToolsService', () => {
       expect(lockKey).toBe('user-1|acme|backend engineer');
     });
 
+    it('caps concurrent lock transactions so they cannot exhaust the connection pool', async () => {
+      let open = 0;
+      let peak = 0;
+      prisma.$transaction.mockImplementation(
+        async (fn: (tx: unknown) => unknown) => {
+          open += 1;
+          peak = Math.max(peak, open);
+          await new Promise((resolve) => setTimeout(resolve, 5));
+          try {
+            return await fn({ $executeRaw: executeRaw });
+          } finally {
+            open -= 1;
+          }
+        },
+      );
+      applications.findByCompanyAndTitle.mockResolvedValue(null);
+      applications.create.mockResolvedValue(app());
+
+      await Promise.all(
+        Array.from({ length: 15 }, (_, i) =>
+          service.logApplication(user, {
+            companyName: `Company ${i}`,
+            jobTitle: 'Engineer',
+          }),
+        ),
+      );
+
+      expect(peak).toBeLessThanOrEqual(3);
+      expect(prisma.$transaction).toHaveBeenCalledTimes(15);
+    });
+
     it('promotes a SAVED application to APPLIED', async () => {
       applications.findByCompanyAndTitle.mockResolvedValue(
         app({ status: 'SAVED' }),

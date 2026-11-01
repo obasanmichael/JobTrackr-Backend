@@ -235,7 +235,7 @@ describe('MCP server (e2e)', () => {
     const { token } = await createApiToken(user.accessToken);
 
     const results = await Promise.all(
-      Array.from({ length: 6 }, () =>
+      Array.from({ length: 25 }, () =>
         callTool(token, 'log_application', {
           companyName: 'Race Co',
           jobTitle: 'Engineer',
