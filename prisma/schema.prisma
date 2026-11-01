@@ -47,8 +47,27 @@ model User {
   calendarEvents       CalendarEvent[]
   notifications        Notification[]
   notificationPreference NotificationPreference?
+  apiTokens            ApiToken[]
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
+}
+
+/// Long-lived personal access tokens for non-browser clients (the MCP server).
+/// Only the SHA-256 hash is stored; the plaintext is shown once at creation.
+model ApiToken {
+  id         String    @id @default(uuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name       String
+  /// First characters of the token, safe to display so users can tell tokens apart.
+  prefix     String
+  tokenHash  String    @unique
+  lastUsedAt DateTime?
+  expiresAt  DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
 }
 
 /// One-time opaque tokens for password reset emails.
