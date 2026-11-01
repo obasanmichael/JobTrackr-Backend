@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { seconds, ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AdminModule } from './admin/admin.module';
+import { ApiTokensModule } from './api-tokens/api-tokens.module';
 import { ApplicationEventsModule } from './application-events/application-events.module';
 import { ApplicationsModule } from './applications/applications.module';
 import { AuthModule } from './auth/auth.module';
@@ -16,6 +17,7 @@ import { InternalModule } from './internal/internal.module';
 import { InterviewsModule } from './interviews/interviews.module';
 import { JobSourcesModule } from './job-sources/job-sources.module';
 import { JobMatchingModule } from './job-matching/job-matching.module';
+import { McpModule } from './mcp/mcp.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RemindersModule } from './reminders/reminders.module';
@@ -80,6 +82,8 @@ import { UsersModule } from './users/users.module';
     NotificationsModule,
     InternalModule,
     DashboardModule,
+    ApiTokensModule,
+    McpModule,
   ],
   providers: [
     {

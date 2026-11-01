@@ -86,6 +86,41 @@ export class ApplicationsService {
     return this.toApplicationResponse(application);
   }
 
+  /** Case-insensitive exact match on company + title; used to avoid duplicate logging. */
+  async findByCompanyAndTitle(
+    currentUser: CurrentUser,
+    companyName: string,
+    jobTitle: string,
+  ): Promise<ApplicationResponseDto | null> {
+    const application = await this.prismaService.jobApplication.findFirst({
+      where: {
+        userId: currentUser.userId,
+        companyName: { equals: companyName.trim(), mode: 'insensitive' },
+        jobTitle: { equals: jobTitle.trim(), mode: 'insensitive' },
+      },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    });
+
+    return application ? this.toApplicationResponse(application) : null;
+  }
+
+  async findByIds(
+    currentUser: CurrentUser,
+    ids: string[],
+  ): Promise<ApplicationResponseDto[]> {
+    if (ids.length === 0) {
+      return [];
+    }
+
+    const applications = await this.prismaService.jobApplication.findMany({
+      where: { userId: currentUser.userId, id: { in: ids } },
+    });
+
+    return applications.map((application) =>
+      this.toApplicationResponse(application),
+    );
+  }
+
   async update(
     currentUser: CurrentUser,
     id: string,

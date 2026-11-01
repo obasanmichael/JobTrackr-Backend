@@ -71,6 +71,25 @@ export class InterviewsService {
     return interviews.map((interview) => this.toResponse(interview));
   }
 
+  /** Exact duplicate lookup (same application, stage and time); used to make scheduling idempotent. */
+  async findExisting(
+    currentUser: CurrentUser,
+    applicationId: string,
+    stage: CreateInterviewDto['stage'],
+    scheduledAt: Date,
+  ): Promise<InterviewResponseDto | null> {
+    const interview = await this.prismaService.interview.findFirst({
+      where: {
+        userId: currentUser.userId,
+        applicationId,
+        stage,
+        scheduledAt,
+      },
+    });
+
+    return interview ? this.toResponse(interview) : null;
+  }
+
   async update(
     currentUser: CurrentUser,
     id: string,
